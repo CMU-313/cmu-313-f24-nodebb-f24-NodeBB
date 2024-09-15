@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ithVU1OO)
 # ![NodeBB](public/images/sm-card.png)
 
 [![Workflow](https://github.com/CMU-313/NodeBB/actions/workflows/test.yaml/badge.svg)](https://github.com/CMU-313/NodeBB/actions/workflows/test.yaml)
@@ -79,5 +80,11 @@ Interested in a sublicense agreement for use of NodeBB in a non-free/restrictive
 * [NodeBB Blog](https://nodebb.org/blog)
 * [Premium Hosting for NodeBB](https://www.nodebb.org/ "NodeBB")
 * Unofficial IRC community &ndash; channel `#nodebb` on Libera.chat
+
+## Team Members
+- Abdulaziz Al Mannai
+- Benjamin Chen
+- Maryam Al Khater
+
 * [Follow us on Twitter](http://www.twitter.com/NodeBB/ "NodeBB Twitter")
 * [Like us on Facebook](http://www.facebook.com/NodeBB/ "NodeBB Facebook")
