@@ -84,38 +84,44 @@ topicsAPI.create = async function (caller, data) {
 };
 
 topicsAPI.reply = async function (caller, data) {
-	if (!data || !data.tid || (meta.config.minimumPostLength !== 0 && !data.content)) {
-		throw new Error('[[error:invalid-data]]');
-	}
-	const payload = { ...data };
-	apiHelpers.setDefaultPostData(caller, payload);
+    if (!data || !data.tid || (meta.config.minimumPostLength !== 0 && !data.content)) {
+        throw new Error('[[error:invalid-data]]');
+    }
+    const payload = { ...data };
+    if (data.anon === 'true') {
+        payload.username = 'Anonymous User';
+        payload.userslug = null;
+        console.log('Anonymous post detected, making it anonymous');
+    }
+    apiHelpers.setDefaultPostData(caller, payload);
 
-	await meta.blacklist.test(caller.ip);
-	const shouldQueue = await posts.shouldQueue(caller.uid, payload);
-	if (shouldQueue) {
-		return await posts.addToQueue(payload);
-	}
+    await meta.blacklist.test(caller.ip);
+    const shouldQueue = await posts.shouldQueue(caller.uid, payload);
+    if (shouldQueue) {
+        return await posts.addToQueue(payload);
+    }
 
-	const postData = await topics.reply(payload); // postData seems to be a subset of postObj, refactor?
-	const postObj = await posts.getPostSummaryByPids([postData.pid], caller.uid, {});
+    const postData = await topics.reply(payload);
+    const postObj = await posts.getPostSummaryByPids([postData.pid], caller.uid, {});
 
-	const result = {
-		posts: [postData],
-		'reputation:disabled': meta.config['reputation:disabled'] === 1,
-		'downvote:disabled': meta.config['downvote:disabled'] === 1,
-	};
+    const result = {
+        posts: [postData],
+        'reputation:disabled': meta.config['reputation:disabled'] === 1,
+        'downvote:disabled': meta.config['downvote:disabled'] === 1,
+    };
 
-	user.updateOnlineUsers(caller.uid);
-	if (caller.uid) {
-		socketHelpers.emitToUids('event:new_post', result, [caller.uid]);
-	} else if (caller.uid === 0) {
-		websockets.in('online_guests').emit('event:new_post', result);
-	}
+    user.updateOnlineUsers(caller.uid);
+    if (caller.uid) {
+        socketHelpers.emitToUids('event:new_post', result, [caller.uid]);
+    } else if (caller.uid === 0) {
+        websockets.in('online_guests').emit('event:new_post', result);
+    }
 
-	socketHelpers.notifyNew(caller.uid, 'newPost', result);
+    socketHelpers.notifyNew(caller.uid, 'newPost', result);
 
-	return postObj[0];
+    return postObj[0];
 };
+
 
 topicsAPI.delete = async function (caller, data) {
 	await doTopicAction('delete', 'event:topic_deleted', caller, {
