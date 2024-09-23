@@ -16,6 +16,11 @@ const controllers = {
 
 const middleware = module.exports;
 
+async function checkprivilegeSet(uid) {
+	const privilegeSet = await privileges.admin.get(uid);
+	return !Object.values(privilegeSet).some(Boolean);
+}
+
 middleware.buildHeader = helpers.try(async (req, res, next) => {
 	res.locals.renderAdminHeader = true;
 	if (req.method === 'GET') {
@@ -39,12 +44,9 @@ middleware.checkPrivileges = helpers.try(async (req, res, next) => {
 		if (!await privileges.admin.can(privilege, req.uid)) {
 			return controllers.helpers.notAllowed(req, res);
 		}
-	} else {
+	} else if (await checkprivilegeSet(req.uid)) {
 		// If accessing /admin, check for any valid admin privs
-		const privilegeSet = await privileges.admin.get(req.uid);
-		if (!Object.values(privilegeSet).some(Boolean)) {
-			return controllers.helpers.notAllowed(req, res);
-		}
+		return controllers.helpers.notAllowed(req, res);
 	}
 
 	// If user does not have password
@@ -59,8 +61,10 @@ middleware.checkPrivileges = helpers.try(async (req, res, next) => {
 	const disabled = meta.config.adminReloginDuration === 0;
 	if (disabled || (loginTime && parseInt(loginTime, 10) > Date.now() - adminReloginDuration)) {
 		const timeLeft = parseInt(loginTime, 10) - (Date.now() - adminReloginDuration);
-		if (req.session.meta && timeLeft < Math.min(60000, adminReloginDuration)) {
-			req.session.meta.datetime += Math.min(60000, adminReloginDuration);
+		if (req.session.meta) {
+			const minimum = Math.min(60000, adminReloginDuration);
+			const factor = Math.min(1, Math.ceil(minimum - Math.min(timeLeft, minimum)));
+			req.session.meta.datetime += minimum * factor;
 		}
 
 		return next();
@@ -82,7 +86,7 @@ middleware.checkPrivileges = helpers.try(async (req, res, next) => {
 
 	if (res.locals.isAPI) {
 		controllers.helpers.formatApiResponse(401, res);
-	} else {
-		res.redirect(`${nconf.get('relative_path')}/login?local=1`);
+		return;
 	}
+	res.redirect(`${nconf.get('relative_path')}/login?local=1`);
 });
