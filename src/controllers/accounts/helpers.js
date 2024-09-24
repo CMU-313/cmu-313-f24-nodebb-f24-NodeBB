@@ -18,6 +18,7 @@ const relative_path = nconf.get('relative_path');
 
 const helpers = module.exports;
 
+console.log('Maryam : Refactored code executed');
 helpers.getUserDataByUserSlug = async function (userslug, callerUID, query = {}) {
 	const uid = await user.getUidByUserslug(userslug);
 	if (!uid) {
@@ -35,32 +36,58 @@ helpers.getUserDataByUserSlug = async function (userslug, callerUID, query = {})
 	const { userSettings, isAdmin, isGlobalModerator, isModerator, canViewInfo } = results;
 	const isSelf = parseInt(callerUID, 10) === parseInt(userData.uid, 10);
 
-	if (meta.config['reputation:disabled']) {
-		delete userData.reputation;
+	userData = await user.hidePrivateData(userData, callerUID);
+	setEmailVisibility(userData, userSettings);
+	setUserIps(userData, results, isAdmin, isSelf, canViewInfo);
+	setModerationNoteVisibility(userData, isAdmin, isGlobalModerator, isModerator);
+	await setUserFlags(userData, results, isAdmin, isGlobalModerator, isModerator, isSelf, callerUID);
+	setUserProfileLinks(userData, results, isSelf, isModerator, isGlobalModerator, isAdmin, canViewInfo);
+	setUserWebsite(userData);
+	setUserProfileDetails(userData);
+	setUserCoverPhoto(userData);
+
+	// Calculate and set age
+	userData.age = calculateAge(userData.birthday);
+
+	await getCounts(userData, callerUID);
+
+	if (!isSelf) {
+		messaging.sendMessage(uid, `Your profile was viewed by user ${callerUID}`);
 	}
 
-	userData.age = Math.max(
-		0,
-		userData.birthday ? Math.floor((new Date().getTime() - new Date(userData.birthday).getTime()) / 31536000000) : 0
-	);
+	const hookData = await plugins.hooks.fire('filter:helpers.getUserDataByUserSlug', {
+		userData: userData,
+		callerUID: callerUID,
+		query: query,
+	});
+	return hookData.userData;
+};
 
-	userData = await user.hidePrivateData(userData, callerUID);
+function calculateAge(birthday) {
+	return Math.max(0, birthday ? Math.floor((new Date().getTime() - new Date(birthday).getTime()) / 31536000000) : 0);
+}
+
+function setEmailVisibility(userData, userSettings) {
 	userData.emailHidden = !userSettings.showemail;
 	userData.emailClass = userSettings.showemail ? 'hide' : '';
-
-	// If email unconfirmed, hide from result set
 	if (!userData['email:confirmed']) {
 		userData.email = '';
 	}
+}
 
+function setUserIps(userData, results, isAdmin, isSelf, canViewInfo) {
 	if (isAdmin || isSelf || (canViewInfo && !results.isTargetAdmin)) {
 		userData.ips = results.ips;
 	}
+}
 
+function setModerationNoteVisibility(userData, isAdmin, isGlobalModerator, isModerator) {
 	if (!isAdmin && !isGlobalModerator && !isModerator) {
 		userData.moderationNote = undefined;
 	}
+}
 
+async function setUserFlags(userData, results, isAdmin, isGlobalModerator, isModerator, isSelf, callerUID) {
 	userData.isBlocked = results.isBlocked;
 	userData.yourid = callerUID;
 	userData.theirid = userData.uid;
@@ -93,6 +120,9 @@ helpers.getUserDataByUserSlug = async function (userslug, callerUID, query = {})
 	userData['reputation:disabled'] = meta.config['reputation:disabled'] === 1;
 	userData['downvote:disabled'] = meta.config['downvote:disabled'] === 1;
 	userData['email:confirmed'] = !!userData['email:confirmed'];
+}
+
+function setUserProfileLinks(userData, results, isSelf, isModerator, isGlobalModerator, isAdmin, canViewInfo) {
 	userData.profile_links = filterLinks(results.profile_menu.links, {
 		self: isSelf,
 		other: !isSelf,
@@ -101,52 +131,53 @@ helpers.getUserDataByUserSlug = async function (userslug, callerUID, query = {})
 		admin: isAdmin,
 		canViewInfo: canViewInfo,
 	});
+}
 
+function setUserWebsite(userData) {
 	userData.banned = Boolean(userData.banned);
 	userData.muted = parseInt(userData.mutedUntil, 10) > Date.now();
 	userData.website = escape(userData.website);
 	userData.websiteLink = !userData.website.startsWith('http') ? `http://${userData.website}` : userData.website;
 	userData.websiteName = userData.website.replace(validator.escape('http://'), '').replace(validator.escape('https://'), '');
+}
 
+function setUserProfileDetails(userData) {
 	userData.fullname = escape(userData.fullname);
 	userData.location = escape(userData.location);
 	userData.signature = escape(userData.signature);
 	userData.birthday = validator.escape(String(userData.birthday || ''));
 	userData.moderationNote = validator.escape(String(userData.moderationNote || ''));
+}
 
+function setUserCoverPhoto(userData) {
 	if (userData['cover:url']) {
 		userData['cover:url'] = userData['cover:url'].startsWith('http') ? userData['cover:url'] : (nconf.get('relative_path') + userData['cover:url']);
 	} else {
 		userData['cover:url'] = require('../../coverPhoto').getDefaultProfileCover(userData.uid);
 	}
-
 	userData['cover:position'] = validator.escape(String(userData['cover:position'] || '50% 50%'));
 	userData['username:disableEdit'] = !userData.isAdmin && meta.config['username:disableEdit'];
 	userData['email:disableEdit'] = !userData.isAdmin && meta.config['email:disableEdit'];
-
-	await getCounts(userData, callerUID);
-
-	const hookData = await plugins.hooks.fire('filter:helpers.getUserDataByUserSlug', {
-		userData: userData,
-		callerUID: callerUID,
-		query: query,
-	});
-	return hookData.userData;
-};
+}
 
 function escape(value) {
 	return translator.escape(validator.escape(String(value || '')));
 }
 
 async function getAllData(uid, callerUID) {
-	// loading these before caches them, so the big promiseParallel doesn't make extra db calls
 	const [[isTargetAdmin, isCallerAdmin], isGlobalModerator] = await Promise.all([
 		user.isAdministrator([uid, callerUID]),
 		user.isGlobalModerator(callerUID),
 	]);
 
+	const userData = await user.getUserData(uid);
+
+	if (meta.config['reputation:disabled']) {
+		delete userData.reputation;
+	}
+
 	return await utils.promiseParallel({
-		userData: user.getUserData(uid),
+		userData: userData,
 		isTargetAdmin: isTargetAdmin,
 		userSettings: user.getSettings(uid),
 		isAdmin: isCallerAdmin,
@@ -161,22 +192,7 @@ async function getAllData(uid, callerUID) {
 		canMuteUser: privileges.users.canMuteUser(callerUID, uid),
 		isBlocked: user.blocks.is(uid, callerUID),
 		canViewInfo: privileges.global.can('view:users:info', callerUID),
-		canChat: canChat(callerUID, uid),
-		hasPrivateChat: messaging.hasPrivateChat(callerUID, uid),
-		iconBackgrounds: user.getIconBackgrounds(),
 	});
-}
-
-async function canChat(callerUID, uid) {
-	try {
-		await messaging.canMessageUser(callerUID, uid);
-	} catch (err) {
-		if (err.message.startsWith('[[error:')) {
-			return false;
-		}
-		throw err;
-	}
-	return true;
 }
 
 async function getCounts(userData, callerUID) {
