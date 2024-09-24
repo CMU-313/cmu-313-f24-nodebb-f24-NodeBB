@@ -29,8 +29,20 @@ Topics.create = async (req, res) => {
 };
 
 Topics.reply = async (req, res) => {
-	const id = await lockPosting(req, '[[error:already-posting]]');
-	try {
+    const id = await lockPosting(req, '[[error:already-posting]]');
+    try {
+        const isAnonymous = req.body.anon === 'true' || req.body.anon === 'on';
+        console.log("Anonymous flag received:", isAnonymous);
+                let replyData = { ...req.body, tid: req.params.tid };
+        if (isAnonymous) {
+            console.log("Post is anonymous. Modifying the username, userslug, and setting uid to 0.");
+            replyData.username = 'Anonymous User';
+            replyData.userslug = null;
+            replyData.uid = 100;  // Set uid to 100 to mark the post as anonymous
+        } else {
+            console.log("Post is not anonymous.");
+        }
+        console.log("Final reply data being sent:", replyData);
 		const payload = await api.topics.reply(req, { ...req.body, tid: req.params.tid });
 		helpers.formatApiResponse(200, res, payload);
 	} finally {

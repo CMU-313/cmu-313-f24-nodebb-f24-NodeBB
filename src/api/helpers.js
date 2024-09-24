@@ -11,10 +11,14 @@ const websockets = require('../socket.io');
 const events = require('../events');
 
 exports.setDefaultPostData = function (reqOrSocket, data) {
-	data.uid = reqOrSocket.uid;
-	data.req = exports.buildReqObject(reqOrSocket, { ...data });
-	data.timestamp = Date.now();
-	data.fromQueue = false;
+    if (data.anon === 'true') {
+        data.uid = 100; // Set uid to 0 for anonymous posts
+    } else {
+        data.uid = reqOrSocket.uid; // Otherwise, use the uid from reqOrSocket
+    }
+    data.req = exports.buildReqObject(reqOrSocket, { ...data });
+    data.timestamp = Date.now();
+    data.fromQueue = false;
 };
 
 // creates a slimmed down version of the request object

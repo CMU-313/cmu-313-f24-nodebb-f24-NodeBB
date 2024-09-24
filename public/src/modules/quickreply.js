@@ -58,11 +58,17 @@ define('quickreply', [
 			}
 
 			const replyMsg = components.get('topic/quickreply/text').val();
+			const anonCheckbox = document.getElementById('anonymousCheckbox').checked ? 'true' : 'false';
+			
 			const replyData = {
 				tid: ajaxify.data.tid,
 				handle: undefined,
 				content: replyMsg,
+				anon: anonCheckbox,
 			};
+
+			console.log('Reply data being sent:', replyData);
+
 			const replyLen = replyMsg.length;
 			if (replyLen < parseInt(config.minimumPostLength, 10)) {
 				return alerts.error('[[error:content-too-short, ' + config.minimumPostLength + ']]');

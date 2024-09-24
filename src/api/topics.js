@@ -88,8 +88,17 @@ topicsAPI.reply = async function (caller, data) {
 		throw new Error('[[error:invalid-data]]');
 	}
 	const payload = { ...data };
-	apiHelpers.setDefaultPostData(caller, payload);
 
+	if (data.anon === 'true') {
+        payload.username = 'Anonymous User';
+        payload.userslug = null;
+        payload.uid = 100;
+        console.log('Anonymous post detected, making it anonymous');
+    }
+    console.log('This is the payload', payload)
+    apiHelpers.setDefaultPostData(caller, payload);
+    console.log('Payload being sent to topics.reply:', payload);
+	
 	await meta.blacklist.test(caller.ip);
 	const shouldQueue = await posts.shouldQueue(caller.uid, payload);
 	if (shouldQueue) {
