@@ -31,30 +31,38 @@ SocketRooms.getAll = async function () {
 	};
 	const userRooms = {};
 	const topicData = {};
-	for (const s of sockets) {
-		for (const key of s.rooms) {
-			if (key === 'online_guests') {
-				totals.onlineGuestCount += 1;
-			} else if (key === 'categories') {
-				totals.users.categories += 1;
-			} else if (key === 'recent_topics') {
-				totals.users.recent += 1;
-			} else if (key === 'unread_topics') {
-				totals.users.unread += 1;
-			} else if (key.startsWith('uid_')) {
-				userRooms[key] = 1;
-			} else if (key.startsWith('category_')) {
-				totals.users.category += 1;
-			} else {
-				const tid = key.match(/^topic_(\d+)/);
-				if (tid) {
-					totals.users.topics += 1;
-					topicData[tid[1]] = topicData[tid[1]] || { count: 0 };
-					topicData[tid[1]].count += 1;
-				}
-			}
+	function checkTid(key) {
+		const tid = key.match(/^topic_(\d+)/);
+		if (tid) {
+			totals.users.topics += 1;
+			topicData[tid[1]] = topicData[tid[1]] || { count: 0 };
+			topicData[tid[1]].count += 1;
 		}
 	}
+	function checkKey(key) {
+		if (key === 'online_guests') {
+			totals.onlineGuestCount += 1;
+		} else if (key === 'categories') {
+			totals.users.categories += 1;
+		} else if (key === 'recent_topics') {
+			totals.users.recent += 1;
+		} else if (key === 'unread_topics') {
+			totals.users.unread += 1;
+		} else if (key.startsWith('uid_')) {
+			userRooms[key] = 1;
+		} else if (key.startsWith('category_')) {
+			totals.users.category += 1;
+		} else {
+			checkTid(key);
+		}
+	}
+
+	for (const s of sockets) {
+		for (const key of s.rooms) {
+			checkKey(key);
+		}
+	}
+
 	totals.onlineRegisteredCount = Object.keys(userRooms).length;
 
 	let topTenTopics = [];
