@@ -34,5 +34,15 @@
         "color": "#ffffff",
         "icon" : "fa-question",
         "order": 3
+    },
+    {
+        "name": "Q&A",
+        "description": "Got a question? Ask and we'll answer!",
+        "descriptionParsed": "<p>Got a question? Ask and we'll answer!</p>\n",
+        "bgColor": "#e95c5a",
+        "color": "#ffffff",
+        "icon" : "fa-question",
+        "order": 5
     }
+
 ]

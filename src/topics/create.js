@@ -33,6 +33,7 @@ module.exports = function (Topics) {
 			lastposttime: 0,
 			postcount: 0,
 			viewcount: 0,
+			isannonymous: data.postAnnonymous,
 		};
 
 		if (Array.isArray(data.tags) && data.tags.length) {
@@ -77,6 +78,24 @@ module.exports = function (Topics) {
 		return topicData.tid;
 	};
 
+	async function validateContent(uid, content) {
+		Topics.checkContent(content);
+		if (!await posts.canUserPostContentWithLinks(uid, content)) {
+			throw new Error(`[[error:not-enough-reputation-to-post-links, ${meta.config['min:rep:post-links']}]]`);
+		}
+	}
+
+	async function handleFollowAndNotifications(uid, settings, postData, topics) {
+		if (uid > 0 && settings.followTopicsOnCreate) {
+			await Topics.follow(postData.tid, uid);
+		}
+		if (parseInt(uid, 10) && !topics[0].scheduled) {
+			user.notifications.sendTopicNotificationToFollowers(uid, topics[0], postData);
+			Topics.notifyTagFollowers(postData, uid);
+			categories.notifyCategoryFollowers(postData, uid);
+		}
+	}
+
 	Topics.post = async function (data) {
 		data = await plugins.hooks.fire('filter:topic.post', data);
 		const { uid } = data;
@@ -98,10 +117,7 @@ module.exports = function (Topics) {
 		await Topics.validateTags(data.tags, data.cid, uid);
 		data.tags = await Topics.filterTags(data.tags, data.cid);
 		if (!data.fromQueue && !isAdmin) {
-			Topics.checkContent(data.content);
-			if (!await posts.canUserPostContentWithLinks(uid, data.content)) {
-				throw new Error(`[[error:not-enough-reputation-to-post-links, ${meta.config['min:rep:post-links']}]]`);
-			}
+			await validateContent(uid, data.content);
 		}
 
 		if (!categoryExists) {
@@ -135,9 +151,7 @@ module.exports = function (Topics) {
 			throw new Error('[[error:no-topic]]');
 		}
 
-		if (uid > 0 && settings.followTopicsOnCreate) {
-			await Topics.follow(postData.tid, uid);
-		}
+		handleFollowAndNotifications(uid, settings, postData, topics);
 		const topicData = topics[0];
 		topicData.unreplied = true;
 		topicData.mainPost = postData;
@@ -150,12 +164,6 @@ module.exports = function (Topics) {
 
 		analytics.increment(['topics', `topics:byCid:${topicData.cid}`]);
 		plugins.hooks.fire('action:topic.post', { topic: topicData, post: postData, data: data });
-
-		if (parseInt(uid, 10) && !topicData.scheduled) {
-			user.notifications.sendTopicNotificationToFollowers(uid, topicData, postData);
-			Topics.notifyTagFollowers(postData, uid);
-			categories.notifyCategoryFollowers(postData, uid);
-		}
 
 		return {
 			topicData: topicData,

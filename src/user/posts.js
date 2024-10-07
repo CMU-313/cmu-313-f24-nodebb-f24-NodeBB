@@ -145,4 +145,22 @@ module.exports = function (User) {
 	User.getPostIds = async function (uid, start, stop) {
 		return await db.getSortedSetRevRange(`uid:${uid}:posts`, start, stop);
 	};
+
+		// Add the pin and unpin methods
+	User.pinPost = async function (pid, uid) {
+		const isAdminOrMod = await privileges.categories.isAdminOrMod('cid', uid); // replace 'cid' with appropriate category ID
+		if (!isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+		await db.setObjectField(`post:${pid}`, 'pinned', true);
+	};
+
+	User.unpinPost = async function (pid, uid) {
+		const isAdminOrMod = await privileges.categories.isAdminOrMod('cid', uid); // replace 'cid' with appropriate category ID
+		if (!isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+		await db.setObjectField(`post:${pid}`, 'pinned', false);
+	};
+
 };
