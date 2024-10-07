@@ -57,19 +57,15 @@ module.exports = function (middleware) {
 					res: res,
 					templateData: options,
 				});
-				if (res.headersSent) {
-					return;
-				}
-				const templateToRender = buildResult.templateData.templateToRender || template;
 
+				checkHeadersSent(res);
+				const templateToRender = buildResult.templateData.templateToRender || template;
 				const renderResult = await plugins.hooks.fire('filter:middleware.render', {
 					req: req,
 					res: res,
 					templateData: buildResult.templateData,
 				});
-				if (res.headersSent) {
-					return;
-				}
+				checkHeadersSent(res);
 				options = renderResult.templateData;
 				options._header = {
 					tags: await meta.tags.parse(req, renderResult, res.locals.metaTags, res.locals.linkTags),
@@ -124,6 +120,13 @@ module.exports = function (middleware) {
 
 		next();
 	};
+
+	function checkHeadersSent(res) {
+		if (res.headersSent) {
+			return true;
+		}
+		return false;
+	}
 
 	async function getLoggedInUser(req) {
 		if (req.user) {
