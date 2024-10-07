@@ -62,6 +62,7 @@ define('forum/topic/threadTools', [
 		});
 
 		topicContainer.on('click', '[component="topic/mark-unread"]', function () {
+			console.log('mark-unreadAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 			topicCommand('del', '/read', undefined, () => {
 				if (app.previousUrl && !app.previousUrl.match('^/topic')) {
 					ajaxify.go(app.previousUrl, function () {
@@ -212,7 +213,7 @@ define('forum/topic/threadTools', [
 			if (dropdownMenu.attr('data-loaded')) {
 				return;
 			}
-			dropdownMenu.html(helpers.generatePlaceholderWave([8, 8, 8]));
+			dropdownMenu.html(helpers.generatePlaceholderWave([10, 10, 10]));
 			const data = await socket.emit('topics.loadTopicTools', { tid: ajaxify.data.tid, cid: ajaxify.data.cid });
 			const html = await app.parseAndTranslate('partials/topic/topic-menu-list', data);
 			$(dropdownMenu).attr('data-loaded', 'true').html(html);

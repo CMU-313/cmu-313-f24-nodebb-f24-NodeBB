@@ -56,6 +56,11 @@ define('forum/category/tools', [
 			return false;
 		});
 
+		components.get('topic/resolve').on('click', function () {
+			categoryCommand('put', '/resolve', 'resolve', onCommandComplete);
+			return false;
+		});
+
 		// todo: should also use categoryCommand, but no write api call exists for this yet
 		components.get('topic/mark-unread-for-all').on('click', function () {
 			const tids = topicSelect.getSelectedTids();
@@ -166,6 +171,10 @@ define('forum/category/tools', [
 
 			case 'pin':
 				threadTools.requestPinExpiry(body, execute.bind(null, true));
+				break;
+
+			case 'resolve': // Add a confirmation for resolving
+				bootbox.confirm('[[topic:thread-tools.resolve-confirm]]', execute);
 				break;
 
 			default:

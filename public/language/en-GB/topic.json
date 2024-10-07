@@ -118,7 +118,7 @@
 	"thread-tools.change-owner": "Change Owner",
 	"thread-tools.select-category": "Select Category",
 	"thread-tools.fork": "Fork Topic",
-	"thread-tools.tag": "Tag Topic",
+	"thread-tools.tag": "Tag Topic AAA",
 	"thread-tools.delete": "Delete Topic",
 	"thread-tools.delete-posts": "Delete Posts",
 	"thread-tools.delete-confirm": "Are you sure you want to delete this topic?",
@@ -128,6 +128,10 @@
 	"thread-tools.purge-confirm" : "Are you sure you want to purge this topic?",
 	"thread-tools.merge-topics": "Merge Topics",
 	"thread-tools.merge": "Merge Topic",
+	"thread-tools.resolve": "Resolve Topic",
+    "thread-tools.resolve-confirm": "Are you sure you want to resolve this topic?",
+    "thread-tools.resolve-success": "The topic has been successfully resolved.",
+
 
 	"topic-move-success": "This topic will be moved to \"%1\" shortly. Click here to undo.",
 	"topic-move-multiple-success": "These topics will be moved to \"%1\" shortly. Click here to undo.",

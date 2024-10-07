@@ -24,6 +24,7 @@ module.exports = function (utils, Benchpress, relative_path) {
 		renderDigestAvatar,
 		userAgentIcons,
 		buildAvatar,
+		checkAnonymous,
 		increment,
 		generateWroteReplied,
 		generateRepliedTo,
@@ -283,7 +284,7 @@ module.exports = function (utils, Benchpress, relative_path) {
 		return icons;
 	}
 
-	function buildAvatar(userObj, size, rounded, classNames, component) {
+	function buildAvatar(userObj, size, rounded, classNames, component, anonymous) {
 		/**
 		 * userObj requires:
 		 *   - uid, picture, icon:bgColor, icon:text (getUserField w/ "picture" should return all 4), username
@@ -291,31 +292,60 @@ module.exports = function (utils, Benchpress, relative_path) {
 		 * rounded: true or false (optional, default false)
 		 * classNames: additional class names to prepend (optional, default none)
 		 * component: overrides the default component (optional, default none)
+		 * isAnonymous: true or false, if true displays anonymous avatar, else uses userObj for avatar
 		 */
+
+		let isAnonymous = false;
+		if (anonymous === 'true') {
+			isAnonymous = true;
+		}
+		// Placeholder values for anonymous users
+		const anonymousUserObj = {
+			username: 'Anonymous',
+			'icon:bgColor': '#ccc', // default background color for the icon
+			'icon:text': '?', // default text inside the icon
+		};
+
+		// Use anonymous details if isAnonymous is true
+		if (isAnonymous) {
+			userObj = anonymousUserObj;
+		}
 
 		// Try to use root context if passed-in userObj is undefined
 		if (!userObj) {
 			userObj = this;
 		}
+
 		classNames = classNames || '';
 		const attributes = new Map([
 			['title', userObj.username],
-			['data-uid', userObj.uid],
+			['data-uid', userObj.uid || ''], // anonymous users won't have a uid
 			['class', `avatar ${classNames}${rounded ? ' avatar-rounded' : ''}`],
 		]);
+
 		const styles = [`--avatar-size: ${size};`];
 		const attr2String = attributes => Array.from(attributes).reduce((output, [prop, value]) => {
-			output += ` ${prop}="${value}"`;
+			if (value) {
+				output += ` ${prop}="${value}"`;
+			}
 			return output;
 		}, '');
 
 		let output = '';
 
-		if (userObj.picture) {
-			output += `<img${attr2String(attributes)} alt="${userObj.username}" loading="lazy" component="${component || 'avatar/picture'}" src="${userObj.picture}" style="${styles.join(' ')}" onError="this.remove()" itemprop="image" />`;
+		// If the user is not anonymous and has a picture, render the picture
+		if (!isAnonymous && userObj.picture) {
+			output += `<img${attr2String(attributes)} alt="${userObj.username}" loading='lazy' component="${component || 'avatar/picture'}" src="${userObj.picture}" style="${styles.join(' ')}" onError="this.remove()" itemprop="image" />`;
 		}
+
+		// Always render the icon for both anonymous and regular users
 		output += `<span${attr2String(attributes)} component="${component || 'avatar/icon'}" style="${styles.join(' ')} background-color: ${userObj['icon:bgColor']}">${userObj['icon:text']}</span>`;
+
 		return output;
+	}
+
+	function checkAnonymous(anonymous) {
+		return anonymous === 'true';
 	}
 
 	function increment(value, inc) {
