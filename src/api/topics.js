@@ -298,3 +298,32 @@ topicsAPI.bump = async (caller, { tid }) => {
 	await topics.markAsUnreadForAll(tid);
 	topics.pushUnreadCount(caller.uid);
 };
+
+topicsAPI.save = async function (caller, { tid }) {
+	if (tid) {
+		throw new Error('[[error:invalid-tid]]');
+	}
+	const exists = await topics.exists(tid);
+	if (!exists) {
+		throw new Error('[[error:no-topic]]');
+	}
+	await topics.saveTopicForUser(tid, caller.uid);
+};
+
+topicsAPI.unsave = async function (caller, { tid }) {
+	if (!tid) {
+		throw new Error('[[error:invalid-tid]]');
+	}
+	const exists = await topics.exists(tid);
+	if (!exists) {
+		throw new Error('[[error:no-topic]]');
+	}
+	await topics.unsaveTopicForUser(tid, caller.uid);
+};
+
+topicsAPI.getSaved = async function (caller, data) {
+	if (!data.tid) {
+		throw new Error('[[error:invalid-tid]]');
+	}
+	await topics.getSavedTopics(caller.uid);
+};

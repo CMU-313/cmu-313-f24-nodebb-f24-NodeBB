@@ -75,6 +75,33 @@ Topics.unpin = async (req, res) => {
 	helpers.formatApiResponse(200, res);
 };
 
+Topics.save = async (req, res) => {
+	try {
+		await api.topics.save(req, { tid: req.params.tid });
+		helpers.formatApiResponse(200, res);
+	} catch (err) {
+		helpers.formatApiResponse(500, res, err);
+	}
+};
+
+Topics.unsave = async (req, res) => {
+	try {
+		await api.topics.unsave(req, { tid: req.params.tid });
+		helpers.formatApiResponse(200, res);
+	} catch (err) {
+		helpers.formatApiResponse(500, res, err);
+	}
+};
+
+Topics.getSaved = async (req, res) => {
+	try {
+		const result = await api.topics.getSaved(req, { page: req.query.page });
+		helpers.formatApiResponse(200, res, result);
+	} catch (err) {
+		helpers.formatApiResponse(500, res, err);
+	}
+};
+
 Topics.lock = async (req, res) => {
 	await api.topics.lock(req, { tids: [req.params.tid] });
 	helpers.formatApiResponse(200, res);
@@ -207,3 +234,4 @@ Topics.bump = async (req, res) => {
 
 	helpers.formatApiResponse(200, res);
 };
+

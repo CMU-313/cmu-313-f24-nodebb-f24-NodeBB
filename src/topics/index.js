@@ -23,6 +23,7 @@ require('./unread')(Topics);
 require('./recent')(Topics);
 require('./user')(Topics);
 require('./fork')(Topics);
+require('./saved')(Topics);
 require('./posts')(Topics);
 require('./follow')(Topics);
 require('./tags')(Topics);
@@ -310,3 +311,43 @@ Topics.search = async function (tid, term) {
 };
 
 require('../promisify')(Topics);
+
+Topics.getUserSavedTopic = async function (tid, uid) {
+	if (parseInt(uid, 10) <= 0) {
+		return false;
+	}
+	return await db.isSortedSetMember(`uid:${uid}:saved_tids`, tid);
+};
+
+Topics.getUserSavedTopics = async function (tids, uid) {
+	if (parseInt(uid, 10) <= 0) {
+		return tids.map(() => false);
+	}
+	return await db.isSortedSetMembers(`uid:${uid}:saved_tids`, tids);
+};
+
+Topics.saveTopicForUser = async function (tid, uid) {
+	if (parseInt(uid, 10) <= 0) {
+		return;
+	}
+	await db.sortedSetAdd(`uid:${uid}:saved_tids`, Date.now(), tid);
+};
+
+Topics.unsaveTopicForUser = async function (tid, uid) {
+	if (parseInt(uid, 10) <= 0) {
+		return;
+	}
+	await db.sortedSetRemove(`uid:${uid}:saved_tids`, tid);
+};
+
+Topics.getSavedTopics = async function (uid, start, stop) {
+	const tids = await db.getSortedSetRevRange(`uid:${uid}:saved_tids`, start, stop);
+	return await Topics.getTopicsByTids(tids);
+};
+
+Topics.isSavedTopic = async function (tid, uid) {
+	if (parseInt(uid, 10) <= 0) {
+		return false;
+	}
+	return await db.isSortedSetMember(`uid:${uid}:saved_tids`, tid);
+};
