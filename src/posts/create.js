@@ -20,18 +20,28 @@ module.exports = function (Posts) {
 		const timestamp = data.timestamp || Date.now();
 		const isMain = data.isMain || false;
 
+		// Check if the post is anonymous
+		const isAnonymous = data.req && data.req.body.isAnonymous === 'true';
+		let postUid = uid;
+
 		if (!uid && parseInt(uid, 10) !== 0) {
 			throw new Error('[[error:invalid-uid]]');
 		}
 
+		// If the post is anonymous, set the `uid` to 0
+		if (isAnonymous) {
+			console.log('Creating anonymous post');
+			postUid = 0; // Indicate anonymous user by setting `uid` to 0
+		}
+
 		if (data.toPid) {
-			await checkToPid(data.toPid, uid);
+			await checkToPid(data.toPid, postUid);
 		}
 
 		const pid = await db.incrObjectField('global', 'nextPid');
 		let postData = {
 			pid: pid,
-			uid: uid,
+			uid: postUid, // Use `postUid`, which could be 0 for anonymous posts
 			tid: tid,
 			content: content,
 			timestamp: timestamp,
@@ -43,13 +53,19 @@ module.exports = function (Posts) {
 		if (data.ip && meta.config.trackIpPerPost) {
 			postData.ip = data.ip;
 		}
-		if (data.handle && !parseInt(uid, 10)) {
+		if (data.handle && !parseInt(postUid, 10)) {
 			postData.handle = data.handle;
 		}
 
 		let result = await plugins.hooks.fire('filter:post.create', { post: postData, data: data });
 		postData = result.post;
 		await db.setObject(`post:${postData.pid}`, postData);
+
+		// If the post is anonymous, add it to the 'anonymous:posts' set
+		if (isAnonymous) {
+			console.log('Storing post in anonymous set');
+			await db.setAdd('anonymous:posts', postData.pid); // Use pid instead of tid for post ID
+		}
 
 		const topicData = await topics.getTopicFields(tid, ['cid', 'pinned']);
 		postData.cid = topicData.cid;
@@ -65,7 +81,7 @@ module.exports = function (Posts) {
 			Posts.uploads.sync(postData.pid),
 		]);
 
-		result = await plugins.hooks.fire('filter:post.get', { post: postData, uid: data.uid });
+		result = await plugins.hooks.fire('filter:post.get', { post: postData, uid: postUid });
 		result.post.isMain = isMain;
 		plugins.hooks.fire('action:post.save', { post: _.clone(result.post) });
 		return result.post;

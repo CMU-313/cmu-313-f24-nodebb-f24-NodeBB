@@ -145,6 +145,20 @@ module.exports = function (Topics) {
 					postObj.user.username = validator.escape(String(postObj.handle));
 					postObj.user.displayname = postObj.user.username;
 				}
+
+				// anonymous user in posts
+				if (postObj.anonymoys === 'true') {
+					postObj.user = structuredClone(postObj.user);
+					postObj.user.username = 'Anonymous';
+					postObj.user.displayname = 'Anonymous';
+					postObj.user.userslug = 'Anonymous';
+					postObj.user.status = 'away';
+					postObj.user.postcount = 0;
+					postObj.user.topiccount = 0;
+					postObj.user.uid = -1;
+					postObj.user['icon:text'] = '*';
+					postObj.user['icon:bgColor'] = '#aaaaaa';
+				}
 			}
 		});
 

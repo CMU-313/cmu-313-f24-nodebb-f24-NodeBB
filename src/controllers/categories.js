@@ -8,6 +8,9 @@ const meta = require('../meta');
 const pagination = require('../pagination');
 const helpers = require('./helpers');
 const privileges = require('../privileges');
+const anonymousPosts = require('../anonymousPosts');
+
+const Posts = require.main.require('./src/posts');
 
 const categoriesController = module.exports;
 
@@ -62,3 +65,51 @@ categoriesController.list = async function (req, res) {
 
 	res.render('categories', data);
 };
+
+categoriesController.renderAnonymousCategory = async function (req, res, apiResponse = false) {
+	try {
+		const posts = await anonymousPosts.getAnonymousPosts();
+		console.log('Rendering anonymous category page with posts:', posts);
+
+		if (apiResponse) {
+			return posts;
+		}
+
+		res.render('anonymous-category', {
+			title: 'Anonymous Category',
+			template: 'anonymous-category',
+			url: req.originalUrl,
+			posts: posts,
+		});
+	} catch (err) {
+		console.error('Error rendering anonymous category:', err);
+		res.status(500).send('Internal Server Error');
+	}
+};
+
+categoriesController.handleAnonymousPost = async function (req, res) {
+	try {
+		const isAnonymous = req.body.isAnonymous === 'true';
+		const { content, tid } = req.body;
+
+		const postData = {
+			tid: tid,
+			content: content,
+		};
+
+		if (isAnonymous) {
+			postData.uid = 0;
+		} else {
+			postData.uid = req.uid;
+		}
+
+		const pid = await Posts.create(postData);
+
+		res.json({ success: true, pid: pid });
+	} catch (err) {
+		console.error('Error handling anonymous post:', err);
+		res.status(500).json({ error: 'Internal Server Error' });
+	}
+};
+
+module.exports = categoriesController;

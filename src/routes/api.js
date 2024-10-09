@@ -1,9 +1,9 @@
 'use strict';
 
 const express = require('express');
-
 const uploadsController = require('../controllers/uploads');
 const helpers = require('./helpers');
+const categoriesController = require('../controllers/categories'); // Add the categories controller
 
 module.exports = function (app, middleware, controllers) {
 	const middlewares = [middleware.autoLocale, middleware.authenticateRequest];
@@ -42,4 +42,6 @@ module.exports = function (app, middleware, controllers) {
 		middleware.canViewUsers,
 		middleware.checkAccountPermissions,
 	], helpers.tryRoute(controllers.accounts.edit.uploadPicture));
+
+	router.post('/post/anonymous', [...middlewares, middleware.applyCSRF], helpers.tryRoute(categoriesController.handleAnonymousPost));
 };

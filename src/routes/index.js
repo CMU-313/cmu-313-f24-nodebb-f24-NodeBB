@@ -9,6 +9,7 @@ const meta = require('../meta');
 const controllers = require('../controllers');
 const controllerHelpers = require('../controllers/helpers');
 const plugins = require('../plugins');
+const categoriesController = require('../controllers/categories');
 
 const authRoutes = require('./authentication');
 const writeRoutes = require('./write');
@@ -41,6 +42,21 @@ _mounts.main = (app, middleware, controllers) => {
 	app.post('/email/unsubscribe/:token', controllers.accounts.settings.unsubscribePost);
 
 	app.post('/compose', middleware.applyCSRF, controllers.composer.post);
+
+	app.get('/anonymous-category', (req, res) => {
+		console.log('Anonymous category route hit');
+		categoriesController.renderAnonymousCategory(req, res);
+	});
+
+	app.get('/api/anonymous-posts', async (req, res) => {
+		try {
+			const posts = await categoriesController.getAnonymousPosts();
+			res.json(posts);
+		} catch (err) {
+			console.error('Error fetching anonymous posts:', err);
+			res.status(500).json({ error: 'Internal Server Error' });
+		}
+	});
 };
 
 _mounts.mod = (app, middleware, controllers) => {
