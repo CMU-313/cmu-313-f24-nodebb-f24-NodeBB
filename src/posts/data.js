@@ -22,13 +22,41 @@ module.exports = function (Posts) {
 			posts: postData,
 			fields: fields,
 		});
+<<<<<<< HEAD
+<<<<<<< HEAD
+		result.posts.forEach((post) => {
+			modifyPost(post, fields);
+			if (post.anonymous === 1) {
+				post.uid = null;
+			}
+		});
+=======
 		result.posts.forEach(post => modifyPost(post, fields));
+>>>>>>> parent of 1ba80bc2 (Merge pull request #26 from CMU-313/anonymous-feature)
+=======
+		result.posts.forEach(post => modifyPost(post, fields));
+>>>>>>> parent of 1ba80bc2 (Merge pull request #26 from CMU-313/anonymous-feature)
 		return result.posts;
 	};
 
 	Posts.getPostData = async function (pid) {
 		const posts = await Posts.getPostsFields([pid], []);
+<<<<<<< HEAD
+<<<<<<< HEAD
+		if (posts && posts.length) {
+			const post = posts[0];
+			if (post.anonymous === 1) {
+				post.uid = null;
+			}
+			return post;
+		}
+		return null;
+=======
 		return posts && posts.length ? posts[0] : null;
+>>>>>>> parent of 1ba80bc2 (Merge pull request #26 from CMU-313/anonymous-feature)
+=======
+		return posts && posts.length ? posts[0] : null;
+>>>>>>> parent of 1ba80bc2 (Merge pull request #26 from CMU-313/anonymous-feature)
 	};
 
 	Posts.getPostsData = async function (pids) {

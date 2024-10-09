@@ -35,6 +35,13 @@ module.exports = function (Posts) {
 			tid: tid,
 			content: content,
 			timestamp: timestamp,
+<<<<<<< HEAD
+<<<<<<< HEAD
+			anonymous: data.anonymous ? 1 : 0, // Added anonymous status
+=======
+>>>>>>> parent of 1ba80bc2 (Merge pull request #26 from CMU-313/anonymous-feature)
+=======
+>>>>>>> parent of 1ba80bc2 (Merge pull request #26 from CMU-313/anonymous-feature)
 		};
 
 		if (data.toPid) {
