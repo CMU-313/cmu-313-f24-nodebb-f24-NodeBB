@@ -118,6 +118,42 @@ module.exports = function (Topics) {
 		return await togglePin(tid, uid, false);
 	};
 
+	topicTools.solve = async function (tid, uid) {
+		return await toggleSolve(tid, uid, true);
+	};
+
+	topicTools.unsolve = async function (tid, uid) {
+		return await toggleSolve(tid, uid, false);
+	};
+
+	async function toggleSolve(tid, uid, res) {
+		const topicData = await Topics.getTopicData(tid);
+		if (!topicData) {
+			throw new Error('[[error:no-topic]]');
+		}
+
+		const promises = [
+			Topics.setTopicField(tid, 'solved', res ? 1 : 0),
+			// Topics.events.log(tid, { type: res ? 'resolve' : 'unresolve', uid }),
+		];
+
+		if (res) {
+			promises.push(db.sortedSetAdd(`cid:${topicData.cid}:tids:solved`, Date.now(), tid));
+		} else {
+			promises.push(db.sortedSetRemove(`cid:${topicData.cid}:tids:solved`, tid));
+		}
+
+		const results = await Promise.all(promises);
+		topicData.resolved = res;
+		topicData.events = results[1];
+		topicData.resolved = res;
+		topicData.resolved = res;
+
+		plugins.hooks.fire('action:topic.solve', { topic: _.clone(topicData), uid });
+
+		return topicData;
+	}
+
 	topicTools.setPinExpiry = async (tid, expiry, uid) => {
 		if (isNaN(parseInt(expiry, 10)) || expiry <= Date.now()) {
 			throw new Error('[[error:invalid-data]]');

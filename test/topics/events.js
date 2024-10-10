@@ -102,4 +102,38 @@ describe('Topic Events', () => {
 			assert(exists.every(exists => !exists));
 		});
 	});
+
+	describe('Solved/Unsolved events', () => {
+		let tid;
+
+		before(async () => {
+			const topicObj = await topics.post({
+				uid: topic.userId,
+				cid: topic.categoryId,
+				title: 'Test topic for solved/unsolved events',
+				content: 'Test topic content',
+			});
+			tid = topicObj.topicData.tid;
+		});
+
+		it('should create a "solved" event when a topic is marked as solved', async () => {
+			await topics.solve(tid, topic.userId);
+			const events = await topics.events.get(tid);
+
+			const solvedEvent = events.find(event => event.type === 'solved');
+			assert(solvedEvent);
+		});
+
+		it('should create an "unsolved" event when a solved topic is marked as unsolved', async () => {
+			await topics.unsolve(tid, topic.userId);
+			const events = await topics.events.get(tid);
+
+			const unsolvedEvent = events.find(event => event.type === 'unsolved');
+			assert(unsolvedEvent);
+		});
+
+		after(async () => {
+			await topics.purge(tid, topic.userId);
+		});
+	});
 });
