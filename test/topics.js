@@ -77,6 +77,35 @@ describe('Topic\'s', () => {
 			});
 		});
 
+		it('should set isAnonymous by default to false when creating a new topic', (done) => {
+			topics.post({
+				uid: topic.userId,
+				title: topic.title,
+				content: topic.content,
+				cid: topic.categoryId,
+			}, (err, result) => {
+				assert.ifError(err);
+				assert(result);
+				assert.strictEqual(result.topicData.isAnonymous, 'false', 'isAnonymous is false by default');
+				done();
+			});
+		});
+
+		it('should set isAnonymous by default to true when creating a new topic', (done) => {
+			topics.post({
+				uid: topic.userId,
+				title: topic.title,
+				content: topic.content,
+				cid: topic.categoryId,
+				postAnonymous: true,
+			}, (err, result) => {
+				assert.ifError(err);
+				assert(result);
+				assert.strictEqual(result.topicData.isAnonymous, 'true', 'isAnonymous is true by default');
+				done();
+			});
+		});
+
 		it('should get post count', async () => {
 			const count = await socketTopics.postcount({ uid: adminUid }, topic.tid);
 			assert.strictEqual(count, 1);

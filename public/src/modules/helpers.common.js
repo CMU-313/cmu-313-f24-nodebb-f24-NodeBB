@@ -63,18 +63,18 @@ module.exports = function (utils, Benchpress, relative_path) {
 	}
 
 	function buildMetaTag(tag) {
-		const name = tag.name ? 'name="' + tag.name + '" ' : '';
-		const property = tag.property ? 'property="' + tag.property + '" ' : '';
-		const content = tag.content ? 'content="' + tag.content.replace(/\n/g, ' ') + '" ' : '';
+		const name = tag.name ? `name="${tag.name}" ` : '';
+		const property = tag.property ? `property="${tag.property}" ` : '';
+		const content = tag.content ? `content="${tag.content.replace(/\n/g, ' ')}" ` : '';
 
-		return '<meta ' + name + property + content + '/>\n\t';
+		return `<meta ${name}${property}${content}/>\n\t`;
 	}
 
 	function buildLinkTag(tag) {
 		const attributes = ['link', 'rel', 'as', 'type', 'href', 'sizes', 'title', 'crossorigin'];
 		const [link, rel, as, type, href, sizes, title, crossorigin] = attributes.map(attr => (tag[attr] ? `${attr}="${tag[attr]}" ` : ''));
 
-		return '<link ' + link + rel + as + type + sizes + title + href + crossorigin + '/>\n\t';
+		return `<link ${link}${rel}${as}${type}${sizes}${title}${href}${crossorigin}/>\n\t`;
 	}
 
 	function stringify(obj) {
@@ -291,9 +291,28 @@ module.exports = function (utils, Benchpress, relative_path) {
 		 * rounded: true or false (optional, default false)
 		 * classNames: additional class names to prepend (optional, default none)
 		 * component: overrides the default component (optional, default none)
+		 * isAnonymous: true or false, if true displays anonymous avatar, else uses userObj for avatar
 		 */
 
+		let isAnonymous = false;
+		// Fixed undefined variable 'anonymous'
+		if (userObj.isAnonymous) {
+			isAnonymous = true;
+		}
+		// Placeholder values for anonymous users
+		const anonymousUserObj = {
+			username: 'Anonymous',
+			'icon:bgColor': '#ccc', // default background color
+			'icon:text': '?',
+		};
+
+		// Use anonymous details if isAnonymous true
+		if (isAnonymous) {
+			userObj = anonymousUserObj;
+		}
+
 		// Try to use root context if passed-in userObj is undefined
+
 		if (!userObj) {
 			userObj = this;
 		}

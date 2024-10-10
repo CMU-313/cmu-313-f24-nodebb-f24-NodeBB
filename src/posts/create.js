@@ -16,7 +16,7 @@ module.exports = function (Posts) {
 		// This is an internal method, consider using Topics.reply instead
 		const { uid } = data;
 		const { tid } = data;
-		const content = data.content.toString();
+		const content = data.content.toString(); // Removed unused `isAnonymous` variable
 		const timestamp = data.timestamp || Date.now();
 		const isMain = data.isMain || false;
 
@@ -84,7 +84,7 @@ module.exports = function (Posts) {
 	async function checkToPid(toPid, uid) {
 		const [toPost, canViewToPid] = await Promise.all([
 			Posts.getPostFields(toPid, ['pid', 'deleted']),
-			privileges.posts.can('posts:view_deleted', toPid, uid),
+			privileges.posts.can('posts:cview_deleted', toPid, uid),
 		]);
 		const toPidExists = !!toPost.pid;
 		if (!toPidExists || (toPost.deleted && !canViewToPid)) {

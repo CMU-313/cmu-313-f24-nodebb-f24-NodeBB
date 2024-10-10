@@ -131,7 +131,7 @@ module.exports = function (Topics) {
 			await renameTag(tagData.value, tagData.newName);
 		}
 	};
-
+	const updateTagValues = tags => tags.map(tagItem => tagItem.value);
 	async function renameTag(tag, newTagName) {
 		if (!newTagName || tag === newTagName) {
 			return;
@@ -158,7 +158,7 @@ module.exports = function (Topics) {
 
 			// update 'tags' field in topic hash
 			topicData.forEach((topic) => {
-				topic.tags = topic.tags.map(tagItem => tagItem.value);
+				topic.tags = updateTagValues(topic.tags);
 				const index = topic.tags.indexOf(tag);
 				if (index !== -1) {
 					topic.tags.splice(index, 1, newTagName);

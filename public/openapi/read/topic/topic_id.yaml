@@ -184,6 +184,9 @@ get:
                           type: boolean
                         downvoted:
                           type: boolean
+                        isAnonymous:
+                          type: string
+                          nullable: true
                         replies:
                           type: object
                           properties:
@@ -434,6 +437,9 @@ get:
                   tid:
                     type: number
                     description: A topic identifier
+                  isAnonymous:
+                    type: string
+                    nullable: true
                   thumb:
                     type: string
                     description: An uploaded topic thumbnail

@@ -91,6 +91,8 @@ TopicObject:
         teaser:
           type: object
           properties:
+            isAnonymous:
+              type: string
             pid:
               type: number
             uid:
@@ -176,6 +178,8 @@ TopicObject:
         tid:
           type: number
           description: A topic identifier
+        isAnonymous: 
+          type: string
         thumb:
           type: string
         pinExpiry:

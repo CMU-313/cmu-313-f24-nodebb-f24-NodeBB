@@ -12,6 +12,8 @@ PostObject:
     uid:
       type: number
       description: A user identifier
+    isAnonymous: 
+      type: string
     timestamp:
       type: number
     deleted:
@@ -93,6 +95,8 @@ PostObject:
           type: number
           description: The post id of the teaser (the most recent post, depending on settings)
           nullable: true
+        isAnonymous: 
+          type: string
         titleRaw:
           type: string
         oldTitle:

@@ -22,13 +22,19 @@ module.exports = function (Posts) {
 			posts: postData,
 			fields: fields,
 		});
-		result.posts.forEach(post => modifyPost(post, fields));
+		result.posts.forEach((post) => {
+			modifyPost(post, fields);
+		});
 		return result.posts;
 	};
 
 	Posts.getPostData = async function (pid) {
 		const posts = await Posts.getPostsFields([pid], []);
-		return posts && posts.length ? posts[0] : null;
+		if (posts && posts.length) {
+			const post = posts[0];
+			return post;
+		}
+		return null;
 	};
 
 	Posts.getPostsData = async function (pids) {

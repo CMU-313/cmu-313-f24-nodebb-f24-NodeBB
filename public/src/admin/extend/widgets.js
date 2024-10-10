@@ -119,18 +119,16 @@ define('admin/extend/widgets', [
 					const data = $(this).find('form').serializeArray();
 
 					for (const d in data) {
-						if (data.hasOwnProperty(d)) {
-							if (data[d].name) {
-								if (widgetData[data[d].name]) {
-									if (!Array.isArray(widgetData[data[d].name])) {
-										widgetData[data[d].name] = [
-											widgetData[data[d].name],
-										];
-									}
-									widgetData[data[d].name].push(data[d].value);
-								} else {
-									widgetData[data[d].name] = data[d].value;
+						if (data.hasOwnProperty(d) && data[d].name) {
+							const name = data[d].name;
+							const value = data[d].value;
+							if (widgetData[name]) {
+								if (!Array.isArray(widgetData[name])) {
+									widgetData[name] = [widgetData[name]];
 								}
+								widgetData[name].push(value);
+							} else {
+								widgetData[name] = value;
 							}
 						}
 					}

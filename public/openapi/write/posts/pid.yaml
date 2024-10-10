@@ -36,6 +36,8 @@ get:
                     type: string
                   timestamp:
                     type: number
+                  isAnonymous:
+                    type: string
                   flagId:
                     type: number
                   deleted:
