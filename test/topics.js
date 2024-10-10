@@ -27,6 +27,7 @@ const request = require('../src/request');
 
 describe('Topic\'s', () => {
 	let topic;
+	let topicEndorseTest;
 	let categoryObj;
 	let adminUid;
 	let adminJar;
@@ -639,6 +640,7 @@ describe('Topic\'s', () => {
 		let newTopic;
 		let followerUid;
 		let moveCid;
+		let endorseTestTopic; // Only for endorse
 
 		before(async () => {
 			({ topicData: newTopic } = await topics.post({
@@ -653,6 +655,21 @@ describe('Topic\'s', () => {
 			({ cid: moveCid } = await categories.create({
 				name: 'Test Category',
 				description: 'Test category created by testing script',
+			}));
+
+			// I created another topic for endorse testing.
+			topicEndorseTest = {
+				userId: fooUid,
+				categoryId: categoryObj.cid,
+				title: 'Foo is the best',
+				content: 'Bar is the best',
+			};
+			// A new topic posted by foo.
+			({ topicData: endorseTestTopic } = await topics.post({
+				uid: topicEndorseTest.userId,
+				title: topicEndorseTest.title,
+				content: topicEndorseTest.content,
+				cid: topicEndorseTest.categoryId,
 			}));
 		});
 
@@ -687,6 +704,31 @@ describe('Topic\'s', () => {
 			const isLocked = await topics.isLocked(newTopic.tid);
 			assert(!isLocked);
 		});
+
+		// Test Cases for Endorsement Logic
+		it('should endorse topic by another admin', async () => {
+			await apiTopics.endorse({ uid: adminUid }, { tids: [endorseTestTopic.tid], cid: categoryObj.cid });
+			const isEndorsed = await topics.isEndorsed(endorseTestTopic.tid);
+			assert(isEndorsed);
+		});
+
+		it('should unendorse topic by another admin', async () => {
+			await apiTopics.unendorse({ uid: adminUid }, { tids: [endorseTestTopic.tid], cid: categoryObj.cid });
+			const isEndorsed = await topics.isEndorsed(endorseTestTopic.tid);
+			assert(!isEndorsed);
+		});
+
+		// Only admin can endorse, and should raise error if regular user wants to endorse
+		it('only admin can endorse', async () => {
+			try {
+				// Test a regular user
+				await apiTopics.endorse({ uid: fooUid }, { tids: [newTopic.tid], cid: categoryObj.cid });
+				assert(false);
+			} catch (err) {
+				assert.equal(err.message, '[[error:no-privileges]]');
+			}
+		});
+		// End of implementation
 
 		it('should pin topic', async () => {
 			await apiTopics.pin({ uid: adminUid }, { tids: [newTopic.tid], cid: categoryObj.cid });

@@ -66,6 +66,7 @@ exports.doTopicAction = async function (action, event, caller, { tids }) {
 
 	await Promise.all(tids.map(async (tid) => {
 		const title = await topics.getTopicField(tid, 'title');
+		// A generic call that handles toggling actions.
 		const data = await topics.tools[action](tid, caller.uid);
 		const notifyUids = await privileges.categories.filterUids('topics:read', data.cid, uids);
 		socketHelpers.emitToUids(event, data, notifyUids);

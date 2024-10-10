@@ -85,6 +85,19 @@ Topics.unlock = async (req, res) => {
 	helpers.formatApiResponse(200, res);
 };
 
+// Comment @YG
+// Configured http response after clicking the 'endorse' button.
+Topics.endorse = async (req, res) => {
+	await api.topics.endorse(req, { tids: [req.params.tid] });
+	helpers.formatApiResponse(200, res);
+};
+
+Topics.unendorse = async (req, res) => {
+	await api.topics.unendorse(req, { tids: [req.params.tid] });
+	helpers.formatApiResponse(200, res);
+};
+// End of implementation
+
 Topics.follow = async (req, res) => {
 	await api.topics.follow(req, req.params);
 	helpers.formatApiResponse(200, res);

@@ -93,6 +93,8 @@ module.exports = function (Topics) {
 	};
 
 	async function toggleLock(tid, uid, lock) {
+		// Comment @YG
+		// Fetching data from database.
 		const topicData = await Topics.getTopicFields(tid, ['tid', 'uid', 'cid']);
 		if (!topicData || !topicData.cid) {
 			throw new Error('[[error:no-topic]]');
@@ -109,6 +111,43 @@ module.exports = function (Topics) {
 		plugins.hooks.fire('action:topic.lock', { topic: _.clone(topicData), uid: uid });
 		return topicData;
 	}
+
+
+	// Comment @YG
+	// Added endorsement back-end logic. Similar to other topicTools functions.
+	topicTools.endorse = async function (tid, uid) {
+		return await toggleEndorse(tid, uid, true);
+	};
+
+	topicTools.unendorse = async function (tid, uid) {
+		return await toggleEndorse(tid, uid, false);
+	};
+
+	async function toggleEndorse(tid, uid, endorse) {
+		// Get the topic data
+		const topicData = await Topics.getTopicFields(tid, ['tid', 'uid', 'cid']);
+		if (!topicData || !topicData.cid) {
+			throw new Error('[[error:no-topic]]');
+		}
+
+
+		// Only admins can do endorsement
+		const isAdminOrMod = await privileges.categories.isAdminOrMod(topicData.cid, uid);
+		if (!isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+
+		// Set the endorse field according to arg endorse
+		await Topics.setTopicField(tid, 'endorsed', endorse ? 1 : 0);
+		topicData.events = await Topics.events.log(tid, { type: endorse ? 'endorse' : 'unendorse', uid });
+		topicData.isEndorsed = endorse;
+		topicData.endorsed = endorse;
+
+		plugins.hooks.fire('action:topic.endorse', { topic: _.clone(topicData), uid: uid });
+
+		return topicData;
+	}
+
 
 	topicTools.pin = async function (tid, uid) {
 		return await togglePin(tid, uid, true);

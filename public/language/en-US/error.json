@@ -189,6 +189,7 @@
     "cant-flag-privileged": "You are not allowed to flag the profiles or content of privileged users (moderators/global moderators/admins)",
     "cant-locate-flag-report": "Cannot locate flag report",
     "self-vote": "You cannot vote on your own post",
+    "self-endorse": "You cannot endorse your own topic",
     "too-many-upvotes-today": "You can only upvote %1 times a day",
     "too-many-upvotes-today-user": "You can only upvote a user %1 times a day",
     "too-many-downvotes-today": "You can only downvote %1 times a day",

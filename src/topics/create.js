@@ -123,6 +123,8 @@ module.exports = function (Topics) {
 		postData.tid = tid;
 		postData.ip = data.req ? data.req.ip : null;
 		postData.isMain = true;
+		// Comment @YG
+		// I wonder why we create post in this method.
 		postData = await posts.create(postData);
 		postData = await onNewPost(postData, data);
 
@@ -156,7 +158,6 @@ module.exports = function (Topics) {
 			Topics.notifyTagFollowers(postData, uid);
 			categories.notifyCategoryFollowers(postData, uid);
 		}
-
 		return {
 			topicData: topicData,
 			postData: postData,

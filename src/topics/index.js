@@ -219,6 +219,7 @@ Topics.getTopicWithPosts = async function (topicData, set, uid, start, stop, rev
 		topicData.forkTimestampISO = utils.toISOString(topicData.forkTimestamp);
 	}
 	topicData.related = related || [];
+	// This means each topic inherently creates a post.
 	topicData.unreplied = topicData.postcount === 1;
 	topicData.icons = [];
 
@@ -295,6 +296,13 @@ async function getMainPosts(mainPids, uid) {
 Topics.isLocked = async function (tid) {
 	const locked = await Topics.getTopicField(tid, 'locked');
 	return locked === 1;
+};
+
+// Comment @YG
+// Adding endorsement check to Topics module
+Topics.isEndorsed = async function (tid) {
+	const endorsed = await Topics.getTopicField(tid, 'endorsed');
+	return endorsed === 1;
 };
 
 Topics.search = async function (tid, term) {

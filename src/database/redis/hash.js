@@ -59,6 +59,7 @@ module.exports = function (module) {
 
 	module.setObjectField = async function (key, field, value) {
 		if (!field) {
+			console.log('No field detected.\n');
 			return;
 		}
 		if (Array.isArray(key)) {

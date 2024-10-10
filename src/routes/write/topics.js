@@ -27,6 +27,11 @@ module.exports = function () {
 	setupApiRoute(router, 'put', '/:tid/lock', [...middlewares], controllers.write.topics.lock);
 	setupApiRoute(router, 'delete', '/:tid/lock', [...middlewares], controllers.write.topics.unlock);
 
+	// Comment @YG
+	// Configured routes for 'endorse' button on the topic drop-down menu.
+	setupApiRoute(router, 'put', '/:tid/endorse', [...middlewares], controllers.write.topics.endorse);
+	setupApiRoute(router, 'delete', '/:tid/endorse', [...middlewares], controllers.write.topics.unendorse);
+
 	setupApiRoute(router, 'put', '/:tid/follow', [...middlewares, middleware.assert.topic], controllers.write.topics.follow);
 	setupApiRoute(router, 'delete', '/:tid/follow', [...middlewares, middleware.assert.topic], controllers.write.topics.unfollow);
 	setupApiRoute(router, 'put', '/:tid/ignore', [...middlewares, middleware.assert.topic], controllers.write.topics.ignore);

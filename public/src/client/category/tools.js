@@ -134,6 +134,10 @@ define('forum/category/tools', [
 		socket.on('event:topic_purged', onTopicPurged);
 		socket.on('event:topic_locked', setLockedState);
 		socket.on('event:topic_unlocked', setLockedState);
+		// Comment @YG
+		// Listening for the event to be triggered, and setting state of endorsement accordingly.
+		// socket.on('event:topic_endorsed', setEndorsedState);
+		// socket.on('event:topic_unendorsed', setEndorsedState);
 		socket.on('event:topic_pinned', setPinnedState);
 		socket.on('event:topic_unpinned', setPinnedState);
 		socket.on('event:topic_moved', onTopicMoved);
@@ -180,6 +184,8 @@ define('forum/category/tools', [
 		socket.removeListener('event:topic_purged', onTopicPurged);
 		socket.removeListener('event:topic_locked', setLockedState);
 		socket.removeListener('event:topic_unlocked', setLockedState);
+		// socket.removeListener('event:topic_endorsed', setEndorsedState);
+		// socket.removeListener('event:topic_unendorsed', setEndorsedState);
 		socket.removeListener('event:topic_pinned', setPinnedState);
 		socket.removeListener('event:topic_unpinned', setPinnedState);
 		socket.removeListener('event:topic_moved', onTopicMoved);
@@ -211,6 +217,7 @@ define('forum/category/tools', [
 		const areAllDeleted = areAll(isTopicDeleted, tids);
 		const isAnyPinned = isAny(isTopicPinned, tids);
 		const isAnyLocked = isAny(isTopicLocked, tids);
+		// const isAnyEndorsed = isAny(isTopicEndorsed, tids);
 		const isAnyScheduled = isAny(isTopicScheduled, tids);
 		const areAllScheduled = areAll(isTopicScheduled, tids);
 
@@ -220,6 +227,9 @@ define('forum/category/tools', [
 
 		components.get('topic/lock').toggleClass('hidden', isAnyLocked);
 		components.get('topic/unlock').toggleClass('hidden', !isAnyLocked);
+
+		// components.get('topic/endorse').toggleClass('hidden', isAnyEndorsed);
+		// components.get('topic/unendorse').toggleClass('hidden', !isAnyEndorsed);
 
 		components.get('topic/pin').toggleClass('hidden', areAllScheduled || isAnyPinned);
 		components.get('topic/unpin').toggleClass('hidden', areAllScheduled || !isAnyPinned);

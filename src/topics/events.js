@@ -52,6 +52,16 @@ Events._types = {
 		icon: 'fa-trash-o',
 		translation: async (event, language) => translateSimple(event, language, 'topic:user-restored-topic'),
 	},
+	// Comment @YG
+	// Added configuration for endorse so that endorsement action gets logged on the screen just like other events.
+	endorse: {
+		icon: 'fa-check',
+		translation: async (event, language) => translateSimple(event, language, 'topic:user-endorsed-topic'),
+	},
+	unendorse: {
+		icon: 'fa-stop',
+		translation: async (event, language) => translateSimple(event, language, 'topic:user-unendorsed-topic'),
+	},
 	move: {
 		icon: 'fa-arrow-circle-right',
 		translation: async (event, language) => translateEventArgs(event, language, 'topic:user-moved-topic-from', renderUser(event), `${event.fromCategory.name}`, renderTimeago(event)),

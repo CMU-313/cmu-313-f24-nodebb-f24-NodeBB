@@ -51,6 +51,18 @@ define('forum/topic/threadTools', [
 			return false;
 		});
 
+		// Comment @YG
+		// Handles the front-end logic that establishes connection with APIs through topicCommand()
+		topicContainer.on('click', '[component="topic/endorse"]', function () {
+			topicCommand('put', '/endorse', 'endorse');
+			return false;
+		});
+
+		topicContainer.on('click', '[component="topic/unendorse"]', function () {
+			topicCommand('del', '/endorse', 'unendorse');
+			return false;
+		});
+
 		topicContainer.on('click', '[component="topic/pin"]', function () {
 			topicCommand('put', '/pin', 'pin');
 			return false;
@@ -313,12 +325,35 @@ define('forum/topic/threadTools', [
 
 		threadEl.find('[component="post"][data-uid="' + app.user.uid + '"].deleted [component="post/tools"]').toggleClass('hidden', isLocked);
 
+		// Comment @YG
+		// The $ is an alias for the jQuery() function to manipulate HTML element and data.
+		// This operation looks for element with the component and add hidden if data.isLocked.
 		$('[component="topic/labels"] [component="topic/locked"]').toggleClass('hidden', !data.isLocked);
+		// Finds dropdown-menu elem inside post/tools elem and set its HTML to be empty.
 		$('[component="post/tools"] .dropdown-menu').html('');
 		ajaxify.data.locked = data.isLocked;
 
 		posts.addTopicEvents(data.events);
 	};
+
+	// Comment @YG
+	// Event handler that responds to API calls triggered by clicking on the topicContainer.
+	ThreadTools.setEndorsedState = function (data) {
+		const threadEl = components.get('topic');
+		if (parseInt(data.tid, 10) !== parseInt(threadEl.attr('data-tid'), 10)) {
+			return;
+		}
+
+		components.get('topic/endorse').toggleClass('hidden', data.isEndorsed).parent().attr('hidden', data.isEndorsed ? '' : null);
+		components.get('topic/unendorse').toggleClass('hidden', !data.isEndorsed).parent().attr('hidden', !data.isEndorsed ? '' : null);
+
+		$('[component="topic/labels"] [component="topic/locked"]').toggleClass('hidden', !data.isLocked);
+		$('[component="topic/endorsed"]').toggleClass('hidden', !data.isEndorsed);
+
+		ajaxify.data.endorsed = data.isEndorsed;
+		posts.addTopicEvents(data.events);
+	};
+
 
 	ThreadTools.setDeleteState = function (data) {
 		const threadEl = components.get('topic');
