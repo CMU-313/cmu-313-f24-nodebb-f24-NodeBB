@@ -18,13 +18,66 @@
         "order": 2
     },
     {
+        "name": "Questions & Answers",
+        "description": "Have a question for the professors or TAs about the class? Ask here!",
+        "descriptionParsed": "<p>Have a question for the professors or TAs about the class? Ask here!</p>\n",
+        "bgColor": "#A020F0",
+        "color": "#ffffff",
+        "icon" : "fa-otter",
+        "order": 3
+    },
+    {
+        "name": "Projects",
+        "description": "Questions about projects",
+        "descriptionParsed": "<p>Questions about projects</p>\n",
+        "bgColor": "#A020F0",
+        "color": "#ffffff",
+        "icon" : "fa-cat",
+        "parentCid" : 3,
+        "order": 1,
+        "cloneChildren": true
+    },
+    {
+        "name": "Exams",
+        "description": "Questions about exams",
+        "descriptionParsed": "<p>Questions about exams</p>\n",
+        "bgColor": "#A020F0",
+        "color": "#ffffff",
+        "icon" : "fa-dog",
+        "parentCid" : 3,
+        "order": 2,
+        "cloneChildren": true
+    },
+    {
+        "name": "Logistics",
+        "description": "Questions about logistics",
+        "descriptionParsed": "<p>Questions about logistics</p>\n",
+        "bgColor": "#A020F0",
+        "color": "#ffffff",
+        "icon" : "fa-dragon",
+        "parentCid" : 3,
+        "order": 3,
+        "cloneChildren": true
+    },
+    {
+        "name": "Lectures",
+        "description": "Questions about lectures",
+        "descriptionParsed": "<p>Questions about lectures</p>\n",
+        "bgColor": "#A020F0",
+        "color": "#ffffff",
+        "icon" : "fa-hippo",
+        "parentCid" : 3,
+        "order": 4,
+        "cloneChildren": true
+    },
+    {
         "name": "Blogs",
         "description": "Blog posts from individual members",
         "descriptionParsed": "<p>Blog posts from individual members</p>\n",
         "bgColor": "#86ba4b",
         "color": "#ffffff",
         "icon" : "fa-newspaper-o",
-        "order": 4
+        "order": 5
     },
     {
         "name": "Comments & Feedback",
@@ -33,6 +86,6 @@
         "bgColor": "#e95c5a",
         "color": "#ffffff",
         "icon" : "fa-question",
-        "order": 3
+        "order": 4
     }
 ]

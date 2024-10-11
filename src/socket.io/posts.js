@@ -187,4 +187,39 @@ SocketPosts.editQueuedContent = async function (socket, data) {
 	return { postData: data };
 };
 
+// Add this event listener for post endorsement
+SocketPosts.endorsePost = async function (socket, data) {
+	const { postId } = data;
+
+	if (!postId) {
+		throw new Error('Invalid post ID');
+	}
+
+	try {
+		// Check if the user has privileges to endorse the post
+		const canEndorse = await privileges.posts.can('endorse', postId, socket.uid);
+		if (!canEndorse) {
+			throw new Error('You do not have the privilege to endorse this post.');
+		}
+
+		// Add the endorsement to the database (this depends on your schema)
+		// Example: Increment endorsement count for the post
+		await db.incrObjectFieldBy(`post:${postId}`, 'endorsementCount', 1);
+
+		// Optionally, you can store the user ID in a set of endorsers
+		await db.setAdd(`post:${postId}:endorsers`, socket.uid);
+
+		// Get the updated endorsement count
+		const endorsementCount = await db.getObjectField(`post:${postId}`, 'endorsementCount');
+
+		// Return the updated endorsement count
+		socket.emit('plugins.endorse.post', null, { endorsements: endorsementCount });
+	} catch (error) {
+		console.error('Error endorsing post:', error);
+		socket.emit('plugins.endorse.post', error);
+	}
+};
+
+
+
 require('../promisify')(SocketPosts);

@@ -76,7 +76,7 @@ define('forum/topic/postTools', [
 	PostTools.toggle = function (pid, isDeleted) {
 		const postEl = components.get('post', 'pid', pid);
 
-		postEl.find('[component="post/quote"], [component="post/bookmark"], [component="post/reply"], [component="post/flag"], [component="user/chat"]')
+		postEl.find('[component="post/quote"], [component="post/bookmark"], [component="post/reply"], [component="post/flag"], [component="user/chat"],[component="post/endorse"]')
 			.toggleClass('hidden', isDeleted);
 
 		postEl.find('[component="post/delete"]').toggleClass('hidden', isDeleted).parent().attr('hidden', isDeleted ? '' : null);
@@ -111,6 +111,43 @@ define('forum/topic/postTools', [
 			onReplyClicked($(this), tid);
 		});
 
+		// Add endorse functionality
+		postContainer.on('click', '[component="post/endorse"]', function (event) {
+			event.preventDefault();
+			console.log('Endorse Post Container'); // Log to confirm button is clicked
+
+			const pid = $(this).closest('[data-pid]').attr('data-pid'); // Get post ID
+			if (!pid) {
+				console.error('No post ID found');
+				return;
+			}
+
+			endorsePost($(this), pid);
+		});
+
+		function endorsePost(button, pid) {
+			console.log('Endorsing post with ID:', pid);
+
+			// Emit socket event to endorse the post
+			socket.emit('plugins.endorse.post', { postId: pid }, function (err, result) {
+				if (err) {
+					return console.error('Error endorsing post: ' + err.message);
+				}
+
+				// Success: Update the button text and endorsement count
+				button.text('Endorsed').addClass('endorsed');
+
+				// Optionally update the endorsement count (assuming result contains the count)
+				const countElement = button.find('.endorse-count');
+				if (countElement.length && result.endorsements) {
+					countElement.text(result.endorsements);
+				}
+
+				app.alertSuccess('Post successfully endorsed!');
+			});
+		}
+
+
 		$('.topic').on('click', '[component="topic/reply"]', function (e) {
 			e.preventDefault();
 			onReplyClicked($(this), tid);
@@ -130,6 +167,7 @@ define('forum/topic/postTools', [
 		});
 
 		postContainer.on('click', '[component="post/upvote"]', function () {
+			console.log('Upvote button clicked');
 			return votes.toggleVote($(this), '.upvoted', 1);
 		});
 
@@ -169,6 +207,7 @@ define('forum/topic/postTools', [
 		});
 
 		postContainer.on('click', '[component="post/edit"]', function () {
+			console.log('Edit button clicked');
 			const btn = $(this);
 
 			const timestamp = parseInt(getData(btn, 'data-timestamp'), 10);
@@ -198,6 +237,7 @@ define('forum/topic/postTools', [
 				togglePostDelete($(this));
 			}
 		});
+
 
 		function checkDuration(duration, postTimestamp, languageKey) {
 			if (!ajaxify.data.privileges.isAdminOrMod && duration && Date.now() - postTimestamp > duration * 1000) {

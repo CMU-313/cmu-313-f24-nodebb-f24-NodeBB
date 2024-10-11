@@ -38,48 +38,19 @@ const passportAuthenticateAsync = function (req, res) {
 
 module.exports = function (middleware) {
 	async function authenticate(req, res) {
-		async function finishLogin(req, user) {
-			const loginAsync = util.promisify(req.login).bind(req);
-			await loginAsync(user, { keepSessionInfo: true });
-			await controllers.authentication.onSuccessfulLogin(req, user.uid, false);
-			req.uid = parseInt(user.uid, 10);
-			req.loggedIn = req.uid > 0;
+		if (await handleAPIAuthentication(req, res)) {
 			return true;
-		}
-
-		if (res.locals.isAPI && (req.loggedIn || !req.headers.hasOwnProperty('authorization'))) {
-			// If authenticated via cookie (express-session), protect routes with CSRF checking
-			await middleware.applyCSRFasync(req, res);
 		}
 
 		if (req.loggedIn) {
 			return true;
-		} else if (req.headers.hasOwnProperty('authorization')) {
-			const user = await passportAuthenticateAsync(req, res);
-			if (!user) { return true; }
-
-			if (user.hasOwnProperty('uid')) {
-				return await finishLogin(req, user);
-			} else if (user.hasOwnProperty('master') && user.master === true) {
-				// If the token received was a master token, a _uid must also be present for all calls
-				if (req.body.hasOwnProperty('_uid') || req.query.hasOwnProperty('_uid')) {
-					user.uid = req.body._uid || req.query._uid;
-					delete user.master;
-					return await finishLogin(req, user);
-				}
-
-				throw new Error('[[error:api.master-token-no-uid]]');
-			} else {
-				winston.warn('[api/authenticate] Unable to find user after verifying token');
-				return true;
-			}
 		}
 
-		await plugins.hooks.fire('response:middleware.authenticate', {
-			req: req,
-			res: res,
-			next: function () {}, // no-op for backwards compatibility
-		});
+		if (req.headers.hasOwnProperty('authorization')) {
+			return await handleAuthorizationHeader(req, res);
+		}
+
+		await handlePluginHooks(req, res);
 
 		if (!res.headersSent) {
 			auth.setAuthVars(req);
@@ -87,12 +58,63 @@ module.exports = function (middleware) {
 		return !res.headersSent;
 	}
 
+	async function handleAPIAuthentication(req, res) {
+		if (res.locals.isAPI && (req.loggedIn || !req.headers.hasOwnProperty('authorization'))) {
+			await middleware.applyCSRFasync(req, res);
+			return true;
+		}
+		return false;
+	}
+
+	async function handleAuthorizationHeader(req, res) {
+		const user = await passportAuthenticateAsync(req, res);
+		if (!user) {
+			return true;
+		}
+
+		if (user.hasOwnProperty('uid')) {
+			return await finishLogin(req, user);
+		}
+
+		if (user.hasOwnProperty('master') && user.master === true) {
+			return await handleMasterToken(req, user);
+		}
+
+		winston.warn('[api/authenticate] Unable to find user after verifying token');
+		return true;
+	}
+
+	async function handleMasterToken(req, user) {
+		if (req.body.hasOwnProperty('_uid') || req.query.hasOwnProperty('_uid')) {
+			user.uid = req.body._uid || req.query._uid;
+			delete user.master;
+			return await finishLogin(req, user);
+		}
+
+		throw new Error('[[error:api.master-token-no-uid]]');
+	}
+
+	async function handlePluginHooks(req, res) {
+		await plugins.hooks.fire('response:middleware.authenticate', {
+			req: req,
+			res: res,
+			next: function () {}, // no-op for backwards compatibility
+		});
+	}
+
+	async function finishLogin(req, user) {
+		const loginAsync = util.promisify(req.login).bind(req);
+		await loginAsync(user, { keepSessionInfo: true });
+		await controllers.authentication.onSuccessfulLogin(req, user.uid, false);
+		req.uid = parseInt(user.uid, 10);
+		req.loggedIn = req.uid > 0;
+		return true;
+	}
+
 	middleware.authenticateRequest = helpers.try(async (req, res, next) => {
 		const { skip } = await plugins.hooks.fire('filter:middleware.authenticate', {
 			skip: {
-				// get: [],
 				post: ['/api/v3/utilities/login'],
-				// etc...
 			},
 		});
 
@@ -117,10 +139,6 @@ module.exports = function (middleware) {
 	});
 
 	async function ensureSelfOrMethod(method, req, res, next) {
-		/*
-			The "self" part of this middleware hinges on you having used
-			middleware.exposeUid prior to invoking this middleware.
-		*/
 		if (!req.loggedIn) {
 			return controllers.helpers.notAllowed(req, res);
 		}
@@ -163,9 +181,6 @@ module.exports = function (middleware) {
 	});
 
 	middleware.checkAccountPermissions = helpers.try(async (req, res, next) => {
-		// This middleware ensures that only the requested user and admins can pass
-
-		// This check if left behind for legacy purposes. Older plugins may call this middleware without ensureLoggedIn
 		if (!req.loggedIn) {
 			return controllers.helpers.notAllowed(req, res);
 		}
@@ -248,7 +263,6 @@ module.exports = function (middleware) {
 	};
 
 	middleware.buildAccountData = async (req, res, next) => {
-		// use lowercase slug on api routes, or direct to the user/<lowercaseslug>
 		const lowercaseSlug = req.params.userslug.toLowerCase();
 		if (req.params.userslug !== lowercaseSlug) {
 			if (res.locals.isAPI) {
@@ -267,11 +281,6 @@ module.exports = function (middleware) {
 	};
 
 	middleware.registrationComplete = async function registrationComplete(req, res, next) {
-		/**
-		 * Redirect the user to complete registration if:
-		 *   * user's session contains registration data
-		 *   * email is required and they have no confirmed email (pending doesn't count, but admins are OK)
-		 */
 		const path = req.path.startsWith('/api/') ? req.path.replace('/api', '') : req.path;
 
 		if (meta.config.requireEmailAddress && await requiresEmailConfirmation(req)) {
@@ -293,25 +302,16 @@ module.exports = function (middleware) {
 			return setImmediate(next);
 		}
 
-		// Append user data if present
 		req.session.registration.uid = req.session.registration.uid || req.uid;
 
 		controllers.helpers.redirect(res, '/register/complete');
 	};
 
 	async function requiresEmailConfirmation(req) {
-		/**
-		 * N.B. THIS IS NOT AN AUTHENTICATION MECHANISM
-		 *
-		 * It merely decides whether or not the accessed category is restricted to
-		 * verified users only, and renders a decision (Boolean) based on whether
-		 * the calling user is verified or not.
-		 */
 		if (req.uid <= 0) {
 			return false;
 		}
 
-		// Extract tid or cid
 		const [confirmed, isAdmin] = await Promise.all([
 			groups.isMember(req.uid, 'verified-users'),
 			user.isAdministrator(req.uid),
@@ -329,7 +329,7 @@ module.exports = function (middleware) {
 			cid = await topics.getTopicField(req.params.topic_id, 'cid');
 			privilege = 'topics:read';
 		} else {
-			return false; // not a category or topic url, no check required
+			return false;
 		}
 
 		const [registeredAllowed, verifiedAllowed] = await Promise.all([

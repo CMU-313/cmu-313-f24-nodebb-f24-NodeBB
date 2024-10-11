@@ -44,6 +44,8 @@ define('forum/topic/events', [
 		'posts.downvote': togglePostVote,
 		'posts.unvote': togglePostVote,
 
+		'event:post_endorsed': onPostEndorsed,
+
 		'event:new_notification': onNewNotification,
 		'event:new_post': posts.onNewPost,
 	};
@@ -185,6 +187,11 @@ define('forum/topic/events', [
 		require(['forum/topic/replies'], function (replies) {
 			replies.onPostPurged(postData);
 		});
+	}
+
+	function onPostEndorsed(data) {
+		const postEl = $('[data-pid="' + data.postId + '"]');
+		postEl.addClass('endorsed');
 	}
 
 	function togglePostDeleteState(data) {

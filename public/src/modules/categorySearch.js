@@ -111,3 +111,4 @@ define('categorySearch', ['alerts', 'bootstrap', 'api'], function (alerts, boots
 
 	return categorySearch;
 });
+

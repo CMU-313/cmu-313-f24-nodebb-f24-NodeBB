@@ -2504,6 +2504,64 @@ describe('Topic\'s', () => {
 			assert(!score);
 		});
 	});
+
+	describe('Endorsed Posts in Topic', () => {
+		let topicData;
+		let endorseeUid;
+		let endorserUid;
+		const postPids = [];
+
+		before(async () => {
+			endorseeUid = await User.create({ username: 'endorsee' });
+			endorserUid = await User.create({ username: 'endorser' });
+
+			({ topicData } = await topics.post({
+				uid: endorseeUid,
+				cid: categoryObj.cid,
+				title: 'Topic with Endorsed Posts',
+				content: 'First post in topic',
+			}));
+
+			const replies = await Promise.all(
+				[1, 2, 3].map(i => topics.reply({
+					uid: endorseeUid,
+					tid: topicData.tid,
+					content: `Post number ${i}`,
+				}))
+			);
+
+			// Collect post PIDs
+			replies.forEach(post => postPids.push(post.pid));
+
+			// Endorse the second post
+			await apiPosts.endorse({ uid: endorserUid }, { pid: postPids[1] });
+		});
+
+		it('should flag endorsed posts in topic data', async () => {
+			const data = await topics.getTopicPosts(topicData, `tid:${topicData.tid}:posts`, 0, -1, endorserUid, false);
+			const endorsedPosts = data.filter(post => post.endorsed === true);
+			assert.strictEqual(endorsedPosts.length, 1);
+			assert.strictEqual(endorsedPosts[0].content, 'Post number 2');
+		});
+
+		it('should include endorsed posts in topic listings', async () => {
+			const topicsData = await topics.getTopics([topicData.tid], endorserUid);
+			const topic = topicsData[0];
+			assert.strictEqual(topic.endorsementCount, 1);
+		});
+
+		it('should sort endorsed posts if sorting is enabled', async () => {
+			// Enable sorting of endorsed posts
+			meta.config.endorsedPostSorting = 1;
+
+			const data = await topics.getTopicPosts(topicData, `tid:${topicData.tid}:posts`, 0, -1, endorserUid, false);
+			assert.strictEqual(data[0].endorsed, true);
+			assert.strictEqual(data[0].content, 'Post number 2');
+
+			// Reset the configuration
+			meta.config.endorsedPostSorting = 0;
+		});
+	});
 });
 
 describe('Topics\'', async () => {
