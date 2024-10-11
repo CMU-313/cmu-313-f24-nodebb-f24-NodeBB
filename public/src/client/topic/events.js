@@ -26,6 +26,9 @@ define('forum/topic/events', [
 		'event:topic_locked': threadTools.setLockedState,
 		'event:topic_unlocked': threadTools.setLockedState,
 
+		'event:topic_answered': threadTools.setAnsweredState,
+		'event:topic_unanswered': threadTools.setAnsweredState,
+
 		'event:topic_pinned': threadTools.setPinnedState,
 		'event:topic_unpinned': threadTools.setPinnedState,
 
@@ -39,6 +42,12 @@ define('forum/topic/events', [
 
 		'posts.bookmark': togglePostBookmark,
 		'posts.unbookmark': togglePostBookmark,
+
+		'posts.verify': toggleVerifyMessage,
+		'posts.unverify': toggleVerifyMessage,
+
+		'posts.answer': toggleAnswered,
+		'posts.unanswer': toggleAnswered,
 
 		'posts.upvote': togglePostVote,
 		'posts.downvote': togglePostVote,
@@ -64,6 +73,10 @@ define('forum/topic/events', [
 			}
 		}
 	};
+
+	function toggleVerifyMessage(data) {
+		console.log(data);
+	}
 
 	function onUserStatusChange(data) {
 		app.updateUserStatus($('[data-uid="' + data.uid + '"] [component="user/status"]'), data.status);
@@ -220,6 +233,10 @@ define('forum/topic/events', [
 
 		el.find('[component="post/bookmark/on"]').toggleClass('hidden', !data.isBookmarked);
 		el.find('[component="post/bookmark/off"]').toggleClass('hidden', data.isBookmarked);
+	}
+
+	function toggleAnswered() {
+		console.log('Toggling answered field.');
 	}
 
 	function togglePostVote(data) {

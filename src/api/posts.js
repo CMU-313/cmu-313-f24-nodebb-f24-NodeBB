@@ -156,6 +156,14 @@ postsAPI.edit = async function (caller, data) {
 	return returnData;
 };
 
+postsAPI.answer = async function (caller, data) {
+	return await apiHelpers.postCommand(caller, 'answer', 'answered', '', data);
+};
+
+postsAPI.unanswer = async function (caller, data) {
+	return await apiHelpers.postCommand(caller, 'unanswer', 'answered', '', data);
+};
+
 postsAPI.delete = async function (caller, data) {
 	await deleteOrRestore(caller, data, {
 		command: 'delete',
@@ -411,6 +419,33 @@ postsAPI.bookmark = async function (caller, data) {
 
 postsAPI.unbookmark = async function (caller, data) {
 	return await apiHelpers.postCommand(caller, 'unbookmark', 'bookmarked', '', data);
+};
+
+postsAPI.verify = async function (caller, data) {
+	const cid = await posts.getCidByPid(data.pid);
+
+	const [isAdmin, isModerator] = await Promise.all([
+		privileges.users.isAdministrator(caller.uid),
+		privileges.users.isModerator(caller.uid, cid),
+	]);
+
+	if (!(isAdmin || isModerator)) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	return await apiHelpers.postCommand(caller, 'verify', 'verify', '', data);
+};
+
+postsAPI.unverify = async function (caller, data) {
+	const cid = await posts.getCidByPid(data.pid);
+	const [isAdmin, isModerator] = await Promise.all([
+		privileges.users.isAdministrator(caller.uid),
+		privileges.users.isModerator(caller.uid, cid),
+	]);
+
+	if (!(isAdmin || isModerator)) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	return await apiHelpers.postCommand(caller, 'unverify', 'unverify', '', data);
 };
 
 async function diffsPrivilegeCheck(pid, uid) {

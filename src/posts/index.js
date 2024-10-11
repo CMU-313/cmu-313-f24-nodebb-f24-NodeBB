@@ -23,7 +23,9 @@ require('./recent')(Posts);
 require('./tools')(Posts);
 require('./votes')(Posts);
 require('./bookmarks')(Posts);
+require('./answer')(Posts);
 require('./queue')(Posts);
+require('./verify')(Posts);
 require('./diffs')(Posts);
 require('./uploads')(Posts);
 

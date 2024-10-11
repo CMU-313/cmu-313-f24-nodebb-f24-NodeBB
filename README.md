@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ithVU1OO)
 # ![NodeBB](public/images/sm-card.png)
 
 [![Workflow](https://github.com/CMU-313/NodeBB/actions/workflows/test.yaml/badge.svg)](https://github.com/CMU-313/NodeBB/actions/workflows/test.yaml)
@@ -81,3 +82,31 @@ Interested in a sublicense agreement for use of NodeBB in a non-free/restrictive
 * Unofficial IRC community &ndash; channel `#nodebb` on Libera.chat
 * [Follow us on Twitter](http://www.twitter.com/NodeBB/ "NodeBB Twitter")
 * [Like us on Facebook](http://www.facebook.com/NodeBB/ "NodeBB Facebook")
+
+=======
+## Team Members
+Kester Tan 
+Anuja Uppuluri 
+Phillip Araujo 
+Camille Day
+
+## Using nodebb-theme-slackers
+We have a custom theme called `nodebb-theme-slackers` to incorporate new front-end UI features into our project.
+
+Here is how to set it up:
+#### Add it to node_modules
+1. Make sure the directory `nodebb-theme-slackers` is located in the root directory  (along with `public`, `src` for example)  
+2. Navigate to `nodebb-theme-slackers` (run `cd nodebb-theme-slackers/` from the root directory)
+3. Run `npm link`
+4. Navigate back to the root directory (run `cd ..`)
+5. Run `npm link nodebb-theme-slackers`
+
+#### Use the new custom theme
+1. After making sure NodeBB is not running (run `./nodebb stop`), run `./nodebb reset -t nodebb-theme-slackers`. Now our new custom theme will be used when NodeBB is relaunched.
+2. Make sure `redis-server` is running so that we can launch our project. 
+3. Launch NodeBB in your preferred way:
+```
+ ./nodebb stop && ./nodebb reset -t nodebb-theme-slackers && ./nodebb build && ./nodebb start
+```
+4. Go to http://localhost:4567/ to see the new theme in action!
+
