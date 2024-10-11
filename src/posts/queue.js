@@ -81,6 +81,7 @@ module.exports = function (Posts) {
 			postData.topic = await topics.getTopicFields(postData.data.tid, ['title', 'cid', 'lastposttime']);
 		}
 		postData.category = await categories.getCategoryData(postData.topic.cid);
+
 		const result = await plugins.hooks.fire('filter:parse.post', { postData: postData.data });
 		postData.data.content = result.postData.content;
 	}
