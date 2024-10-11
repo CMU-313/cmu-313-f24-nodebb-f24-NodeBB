@@ -1,4 +1,3 @@
-
 'use strict';
 
 const _ = require('lodash');
@@ -53,6 +52,7 @@ module.exports = function (Topics) {
 			postData[0].index = 0;
 			replies = postData.slice(1);
 		}
+		Topics.addAnswered(topicData.tid, uid);
 
 		Topics.calculatePostIndices(replies, repliesStart);
 		await addEventStartEnd(postData, set, reverse, topicData);
@@ -67,6 +67,12 @@ module.exports = function (Topics) {
 			});
 		}
 
+		// const uids = _.uniq(postData.map(post => post && post.uid));
+		// const isAdminArr = await Promise.all(uids.map(uid => user.isAdministrator(uid)));
+		// console.log('isAdminArr', isAdminArr);
+		// const answeredByProf = isAdminArr.some(isAdmin => isAdmin);
+		// topicData.answeredByProf = answeredByProf;
+		// await Topics.setTopicField(tid, 'answered', answeredByProf);
 		const result = await plugins.hooks.fire('filter:topic.getPosts', {
 			topic: topicData,
 			uid: uid,
@@ -75,32 +81,69 @@ module.exports = function (Topics) {
 		return result.posts;
 	};
 
+	Topics.addAnswered = async function (tid, uid) {
+		const isAdmin = await user.isAdministrator(uid);
+		const topicData = await Topics.getTopicData(tid);
+		const answeredByProf = isAdmin;
+		topicData.answeredByProf = answeredByProf;
+		console.log(typeof String(answeredByProf));
+		await Topics.setTopicField(tid, 'answered', String(answeredByProf));
+	};
+
+	// The following code was created with the assistance of ChatGPT.
 	async function addEventStartEnd(postData, set, reverse, topicData) {
 		if (!postData.length) {
 			return;
 		}
+
 		postData.forEach((p, index) => {
-			if (p && p.index === 0 && reverse) {
-				p.eventStart = topicData.lastposttime;
-				p.eventEnd = Date.now();
-			} else if (p && postData[index + 1]) {
-				p.eventStart = reverse ? postData[index + 1].timestamp : p.timestamp;
-				p.eventEnd = reverse ? p.timestamp : postData[index + 1].timestamp;
+			if (p) {
+				processPost(p, postData, index, reverse, topicData);
 			}
 		});
+
 		const lastPost = postData[postData.length - 1];
 		if (lastPost) {
-			lastPost.eventStart = reverse ? topicData.timestamp : lastPost.timestamp;
-			lastPost.eventEnd = reverse ? lastPost.timestamp : Date.now();
-			if (lastPost.index) {
-				const nextPost = await db[reverse ? 'getSortedSetRevRangeWithScores' : 'getSortedSetRangeWithScores'](set, lastPost.index, lastPost.index);
-				if (reverse) {
-					lastPost.eventStart = nextPost.length ? nextPost[0].score : lastPost.eventStart;
-				} else {
-					lastPost.eventEnd = nextPost.length ? nextPost[0].score : lastPost.eventEnd;
-				}
+			await processLastPost(lastPost, set, reverse, topicData);
+		}
+	}
+
+	function processPost(p, postData, index, reverse, topicData) {
+		if (p.index === 0 && reverse) {
+			setEventStartEnd(p, topicData.lastposttime, Date.now());
+		} else if (postData[index + 1]) {
+			setEventStartEnd(
+				p,
+				reverse ? postData[index + 1].timestamp : p.timestamp,
+				reverse ? p.timestamp : postData[index + 1].timestamp
+			);
+		}
+	}
+
+	async function processLastPost(lastPost, set, reverse, topicData) {
+		setEventStartEnd(
+			lastPost,
+			reverse ? topicData.timestamp : lastPost.timestamp,
+			reverse ? lastPost.timestamp : Date.now()
+		);
+		if (lastPost.index) {
+			const nextPost = await getNextPost(set, lastPost.index, reverse);
+			if (reverse) {
+				lastPost.eventStart = nextPost.length ? nextPost[0].score : lastPost.eventStart;
+			} else {
+				lastPost.eventEnd = nextPost.length ? nextPost[0].score : lastPost.eventEnd;
 			}
 		}
+	}
+
+	function setEventStartEnd(post, start, end) {
+		post.eventStart = start;
+		post.eventEnd = end;
+	}
+
+	async function getNextPost(set, index, reverse) {
+		const method = reverse ? 'getSortedSetRevRangeWithScores' : 'getSortedSetRangeWithScores';
+		return db[method](set, index, index);
 	}
 
 	Topics.addPostData = async function (postData, uid) {

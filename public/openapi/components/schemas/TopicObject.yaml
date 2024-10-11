@@ -215,6 +215,8 @@ TopicObjectSlim:
           type: number
         postercount:
           type: number
+        answered:
+          type: string
         scheduled:
           type: number
         deleted:

@@ -1,4 +1,3 @@
-
 'use strict';
 
 const nconf = require('nconf');
@@ -15,6 +14,38 @@ const Configs = module.exports;
 
 Meta.config = {};
 
+function validNumber(number, value) {
+	return !isNaN(number) && isFinite(value);
+}
+
+function parseNumberType(number, value) {
+	if (validNumber(number, value)) {
+		return number;
+	}
+	return value;
+}
+
+function catchParseError(value, defaultKey) {
+	try {
+		return JSON.parse(value || '[]');
+	} catch (err) {
+		winston.error(err.stack);
+		return defaultKey;
+	}
+}
+
+function stringToNumber(defaultType, type) {
+	return defaultType === 'string' && type === 'number';
+}
+
+function numberToString(defaultType, type) {
+	return defaultType === 'number' && type === 'string';
+}
+
+function arrayToNonArray(defaultType, type) {
+	return Array.isArray(defaultType) && !Array.isArray(type);
+}
+
 // called after data is loaded from db
 function deserialize(config) {
 	const deserialized = {};
@@ -23,29 +54,20 @@ function deserialize(config) {
 		const type = typeof config[key];
 		const number = parseFloat(config[key]);
 
-		if (defaultType === 'string' && type === 'number') {
+		if (stringToNumber(defaultType, type)) {
 			deserialized[key] = String(config[key]);
-		} else if (defaultType === 'number' && type === 'string') {
-			if (!isNaN(number) && isFinite(config[key])) {
-				deserialized[key] = number;
-			} else {
-				deserialized[key] = defaults[key];
-			}
+		} else if (numberToString(defaultType, type)) {
+			deserialized[key] = parseNumberType(number, config[key]);
 		} else if (config[key] === 'true') {
 			deserialized[key] = true;
 		} else if (config[key] === 'false') {
 			deserialized[key] = false;
 		} else if (config[key] === null) {
 			deserialized[key] = defaults[key];
-		} else if (defaultType === 'undefined' && !isNaN(number) && isFinite(config[key])) {
+		} else if (defaultType === 'undefined' && validNumber(number, config[key])) {
 			deserialized[key] = number;
-		} else if (Array.isArray(defaults[key]) && !Array.isArray(config[key])) {
-			try {
-				deserialized[key] = JSON.parse(config[key] || '[]');
-			} catch (err) {
-				winston.error(err.stack);
-				deserialized[key] = defaults[key];
-			}
+		} else if (arrayToNonArray(defaults[key], config[key])) {
+			deserialized[key] = catchParseError(config[key], defaults[key]);
 		} else {
 			deserialized[key] = config[key];
 		}

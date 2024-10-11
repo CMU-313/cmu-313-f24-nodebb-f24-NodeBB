@@ -616,6 +616,15 @@ describe('Topic\'s', () => {
 					assert.strictEqual(postsData[i].content, `topic reply ${i}`);
 				}
 			});
+
+			it('should check if post has answered by instructor field', async () => {
+				const topicData = await topics.getTopicData(tid);
+				const postsData = await topics.getTopicPosts(topicData, `tid:${tid}:posts`, 0, -1, topic.userId, false);
+				assert.strictEqual(postsData.length, 31);
+				for (let i = 0; i < 31; i++) {
+					assert.strictEqual(topicData.answered, undefined || 'true');
+				}
+			});
 		});
 	});
 

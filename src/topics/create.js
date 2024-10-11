@@ -19,7 +19,7 @@ module.exports = function (Topics) {
 	Topics.create = async function (data) {
 		// This is an internal method, consider using Topics.post instead
 		const timestamp = data.timestamp || Date.now();
-
+		const answered = false;
 		const tid = await db.incrObjectField('global', 'nextTid');
 
 		let topicData = {
@@ -33,8 +33,8 @@ module.exports = function (Topics) {
 			lastposttime: 0,
 			postcount: 0,
 			viewcount: 0,
+			answered: answered,
 		};
-
 		if (Array.isArray(data.tags) && data.tags.length) {
 			topicData.tags = data.tags.join(',');
 		}
@@ -231,7 +231,7 @@ module.exports = function (Topics) {
 			topicInfo,
 		] = await Promise.all([
 			posts.getUserInfoForPosts([postData.uid], uid),
-			Topics.getTopicFields(tid, ['tid', 'uid', 'title', 'slug', 'cid', 'postcount', 'mainPid', 'scheduled', 'tags']),
+			Topics.getTopicFields(tid, ['tid', 'uid', 'title', 'slug', 'cid', 'postcount', 'mainPid', 'scheduled', 'tags', 'answered']),
 			Topics.addParentPosts([postData]),
 			Topics.syncBacklinks(postData),
 			posts.parsePost(postData),
